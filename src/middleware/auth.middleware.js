@@ -8,18 +8,18 @@ export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: true,
-      message: 'Token required',
-      code: 'UNAUTHORIZED'
-    });
+    return next(AppError.unauthorized('Access token required'));
   }
 
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return next(AppError.unauthorized('Access token required'))
+  // Explicit token format checking
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return next(AppError.unauthorized('Invalid token format'));
   }
+
+  const token = parts[1]
+
+  console.log('Token preview:', token?.substring(0, 20) + '...');
 
   try {
     // Verify token and decode payload.
@@ -36,6 +36,7 @@ export const authenticateToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.error('JWT verify error:', error.name, error.message)
     return next(AppError.unauthorized('Invalid or expired token'))
   }
 };
