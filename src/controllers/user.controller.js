@@ -83,30 +83,44 @@ export const login = async (req, res, next) => {
 
 export const validateEmail = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
+    const { code } = req.body;
+
+    const user = await User.findById(req.user._id);
 
     if (!user || user.status === 'verified') {
       return next(AppError.badRequest('Invalid or already verified'));
     }
 
-    if (user.verificationCode !== req.body.code) {
+    // Return immediately if max attempts exceeded
+    if (user.verificationAttempts <= 0) {
+      return next(AppError.tooManyRequests('Too many attempts'));
+    }
+
+    // Check if code is wrong
+    if (user.verificationCode !== code) {
       user.verificationAttempts -= 1;
       await user.save();
 
       if (user.verificationAttempts <= 0) {
         return next(AppError.tooManyRequests('Too many attempts'));
       }
-      return next(AppError.badRequest('Invalid code'));
+
+      return next(AppError.badRequest(
+        `Invalid code. Attempts left: ${user.verificationAttempts}`
+      ));
     }
 
+    // Verify if all goes well
     user.status = 'verified';
-    user.verificationCode = undefined;
-    user.verificationAttempts = 0;
+    user.verificationCode = null;
     await user.save();
 
-    notificationService.emit('user:verified', user);
+    notificationService.emit('user:verified', {
+      userId: user._id,
+      email: user.email
+    });
 
-    res.json({ message: 'Email verified successfully' });
+    res.status(200).json({ message: 'Email verified successfully' });
   } catch (error) {
     next(error);
   }
