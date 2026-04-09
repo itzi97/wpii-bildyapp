@@ -14,13 +14,13 @@ notificationService.on('user:verified', (user) => {
 });
 
 // Log when a user is invited.
-notificationService.on('user:invited', (user) => {
-  console.log(`User invited: ${user.email}`);
+notificationService.on('user:invited', (payload) => {
+  console.log(`User invited: ${payload.email}`);
 });
 
 // Log when a user is deleted.
-notificationService.on('user:deleted', (user) => {
-  console.log(`User deleted: ${user.email}`);
+notificationService.on('user:deleted', (payload) => {
+  console.log(`User deleted: ${payload.email} (soft: ${payload.soft})`);
 });
 
 export default notificationService;
