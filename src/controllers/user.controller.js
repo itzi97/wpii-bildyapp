@@ -52,7 +52,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const user = await User.findOne({ email: req.body.email }).select('+password +refreshToken');
-    if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+    if (!user || user.deleted || !(await bcrypt.compare(req.body.password, user.password))) {
       return next(AppError.unauthorized('Invalid credentials'));
     }
 
@@ -323,23 +323,19 @@ export const deleteUser = async (req, res, next) => {
 
     if (soft) {
       // Soft delete
-      await User.findByIdAndUpdate(req.user._id, {
-        deleted: true
-      });
-      res.json({
-        ack: true,
-        message: 'User soft deleted successfully'
-      });
+      await User.findByIdAndUpdate(req.user._id, { deleted: true });
+      res.json({ ack: true, message: 'User soft deleted successfully' });
     } else {
       // Hard delete
       await User.findByIdAndDelete(req.user._id);
       res.status(204).send();
     }
 
-    notificationService.emite('user:deleted', {
+    notificationService.emit('user:deleted', {
       userId: req.user._id,
       soft: soft
     });
+
   } catch (error) {
     next(error);
   }
