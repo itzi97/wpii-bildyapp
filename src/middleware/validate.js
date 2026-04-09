@@ -1,24 +1,36 @@
-// Validate request bodies with Zod.
-const validate = (schema) => (req, res, next) => {
+import { ZodError } from 'zod';
+
+// Generic Zod validation middleware
+export const validate = (schema) => async (req, res, next) => {
   try {
-    req.body = schema.parse(req.body);
+    const parsed = await schema.parseAsync({
+      body: req.body,
+      query: req.query,
+      params: req.params
+    });
+
+    if (parsed.body) req.body = parsed.body;
+    if (parsed.query) req.query = parsed.query;
+    if (parsed.params) req.params = parsed.params;
+
     next();
   } catch (error) {
-    const errors = error.errors.map((e) => ({
-      field: e.path.join('.'),
-      message: e.message
-    }));
+    if (error instanceof ZodError) {
+      const details = error.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message
+      }));
 
-    // TODO: Should I use AppError here? In T6 it's direct
-    // I'm asuming it has to do with short-circuit and return 400 skipping
-    // passing control to errorHandler
-    res.status(400).json({
-      error: true,
-      message: 'Validation error',
-      code: 'VALIDATION_ERROR',
-      details: errors
-    });
+      return res.status(400).json({
+        error: true,
+        message: 'Validation error',
+        code: 'VALIDATION_ERROR',
+        details
+      });
+    }
+
+    next(error);
   }
-}
+};
 
 export default validate;
