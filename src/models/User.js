@@ -25,7 +25,8 @@ const userSchema = new mongoose.Schema({
   verificationCode: { type: String },
   verificationAttempts: { type: Number, default: 3 },
   name: { type: String, trim: true },
-  lastName: { type: String, trim: true }
+  lastName: { type: String, trim: true },
+  deleted: { type: Boolean, default: false, index: true }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
