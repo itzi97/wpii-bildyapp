@@ -1,8 +1,17 @@
 import { Router } from 'express';
-import { register, login, validateEmail } from '../controllers/user.controller.js';
-import { registerSchema, loginSchema, emailValidationSchema } from '../validators/user.validator.js';
-import validate from '../middleware/validate.js';
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import {
+  register,
+  validateEmail,
+  login,
+  getCurrentUser
+} from '../controllers/user.controller.js';
+import {
+  registerSchema,
+  emailValidationSchema,
+  loginSchema
+} from '../validators/user.validator.js';
+import validate from '../middleware/validate.js';
 
 const router = Router();
 
@@ -33,9 +42,7 @@ router.patch('/logo', (req, res) => {
 });
 
 // TODO: Implement.
-router.get('/', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.get('/', authenticateToken, getCurrentUser);
 
 // TODO: Implement.
 router.post('/refresh', (req, res) => {
