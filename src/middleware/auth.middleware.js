@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import AppError from '../utils/AppError.js';
 
 // Middleware to check access token sent in Authorization header.
 export const authenticateToken = async (req, res, next) => {
@@ -7,7 +8,7 @@ export const authenticateToken = async (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
+    return next(AppError.unauthorized('Access token required'))
   }
 
   try {
@@ -18,13 +19,13 @@ export const authenticateToken = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return next(AppError.unauthorized('User not found'))
     }
 
     // Attach authenticated user to request object.
     req.user = user;
     next();
   } catch (error) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
+    return next(AppError.forbidden('Invalid or expired token'))
   }
 };
