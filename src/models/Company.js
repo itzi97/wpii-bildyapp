@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const companySchema = new mongoose.Schema({
-  // References User (schema declared in User.js).
+  // Reference to User model.
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -12,17 +12,17 @@ const companySchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  // Prevent duplicates, create new document if none exist beforehand.
+  // Used to match or create companies.
   cif: {
     type: String,
     required: true,
     unique: true,
     trim: true,
-    index: true
+    index: true // Explicit for clarity.
   },
   address: {
     street: String,
-    number: String, // Maybe a number is "13A".
+    number: String, // Could be 13A, for example.
     postal: String,
     city: String,
     province: String
