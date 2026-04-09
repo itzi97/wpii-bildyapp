@@ -111,3 +111,19 @@ export const validateEmail = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getCurrentUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('company')
+      .select('-password -verificationCode -verificationAttempts');
+
+    if (!user) {
+      return next(AppError.notFound('User not found'));
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error)
+  }
+};
