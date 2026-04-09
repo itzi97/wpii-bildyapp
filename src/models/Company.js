@@ -19,6 +19,13 @@ const companySchema = new mongoose.Schema({
     unique: true,
     trim: true,
     index: true
+  },
+  address: {
+    street: String,
+    number: String, // Maybe a number is "13A".
+    postal: String,
+    city: String,
+    province: String
   }
 }, { timestamps: true });
 
