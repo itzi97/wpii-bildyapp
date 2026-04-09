@@ -26,13 +26,18 @@ export const emailValidationSchema = z.object({
   code: z
     .string({ required_error: 'Validation code is required' })
     .trim()
+    .regex(/^\d{6}/, 'Validation code must be exactly 6 digits')
 })
 
 // Personal onboarding PUT /api/user/register
 export const personalOnboardingSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
-  nif: z.string().trim().min(1, 'NIF is required')
+  nif: z
+    .string()
+    .trim()
+    .min(1, 'NIF is required')
+    .min(8, 'NIF must be at least 8 characters')
 })
 
 const addressSchema = z.object({
@@ -43,13 +48,18 @@ const addressSchema = z.object({
   province: z.string().trim().min(1, 'Province is required')
 });
 
-// Company onboarding PATCH /api/user/company
-export const companyOnboardingSchema = z.object({
-  name: z.string().trim().min(1, 'Company name is required'),
-  cif: z.string().trim().min(1, 'CIF is required'),
-  address: addressSchema,
-  isFreelance: z.boolean().default(false)
-})
+// Company onboarding PATCH /api/user/company (autofilled if freelance)
+export const companyOnboardingSchema = z.discriminatedUnion('isFreelance', [
+  z.object({
+    isFreelance: z.literal(true)
+  }),
+  z.object({
+    isFreelance: z.literal(false),
+    name: z.string().trim().min(1, 'Company name is required'),
+    cif: z.string().trim().min(1, 'CIF is required'),
+    address: addressSchema
+  })
+]);
 
 // Change password PUT /api/user/password
 export const changePasswordSchema = z
