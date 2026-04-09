@@ -14,7 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
-app.use(rateLimit({ windowMS: 15 * 60 * 1000, limit: 100 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(mongoSanitize());
 app.use(express.json());
 
