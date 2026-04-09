@@ -13,9 +13,17 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  allowed.includes(file.mimetype)
+    ? cb(null, true)
+    : cb(new Error('Only images (jpeg, png, webp)'));
+};
+
 // Initial multer setup for logo uploads.
 export const upload = multer({
   storage,
+  fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5 MB max file size
   }
