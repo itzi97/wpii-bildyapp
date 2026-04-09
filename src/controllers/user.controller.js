@@ -291,3 +291,28 @@ export const refreshToken = async (req, res, next) => {
     next(error);
   }
 };
+
+export const uploadLogo = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next(AppError.badRequest('No file uploaded'));
+    }
+
+    const user = await User.findById(req.user._id).populate('company');
+
+    if (!user.company) {
+      return next(AppError.badRequest('User has no company'));
+    }
+
+    const logoUrl = `/uploads/${req.file.filename}`;
+    await Company.findByIdAndUpdate(user.company._id, { logo: logoUrl });
+
+    res.json({
+      ack: true,
+      message: 'Logo uploaded successfully',
+      logo: logoUrl
+    });
+  } catch (error) {
+    next(error);
+  }
+};

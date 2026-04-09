@@ -8,7 +8,8 @@ import {
   logout,
   updatePersonalData,
   updateCompany,
-  refreshToken
+  refreshToken,
+  uploadLogo
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
@@ -18,6 +19,7 @@ import {
   companyOnboardingSchema
 } from '../validators/user.validator.js';
 import validate from '../middleware/validate.js';
+import { upload } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -46,10 +48,7 @@ router.patch(
   updateCompany
 );
 
-// TODO: Implement.
-router.patch('/logo', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.patch('/logo', authenticateToken, upload.single('logo'), uploadLogo);
 
 // TODO: Implement.
 router.get('/', authenticateToken, getCurrentUser);
