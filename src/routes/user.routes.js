@@ -68,9 +68,12 @@ router.put(
   changePassword
 );
 
-// TODO: Implement.
-router.post('/invite', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.post(
+  '/invite',
+  authenticateToken,
+  authorizeRoles('admin'),
+  validate(inviteUserSchema),
+  inviteUser
+);
 
 export default router;
