@@ -65,7 +65,8 @@ export const companyOnboardingSchema = z.discriminatedUnion('isFreelance', [
 export const changePasswordSchema = z
   .object({
     currentPassword: z
-      .string({ required_error: 'Current password is required' }),
+      .string({ required_error: 'Current password is required' })
+      .min(8, 'Current password must be at least 8 characters'),
     newPassword: z
       .string({ required_error: 'New password is required' })
       .min(8, 'New password must be at least 8 characters')
