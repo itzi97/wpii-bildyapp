@@ -1,0 +1,152 @@
+# ========================================
+# BildyApp API - COMPLETE USER FLOW
+# Use Thunder Client / VS Code REST Client
+# Base URL: http://localhost:3000/api/user
+# ========================================
+
+###
+
+# 1. REGISTER NEW USER
+POST http://localhost:3000/api/user/register
+Content-Type: application/json
+
+{
+  "email": "admin@bildy.app",
+  "password": "Admin123!"
+}
+
+@adminAccessToken = {{response.body.accessToken}}
+@adminRefreshToken = {{response.body.refreshToken}}
+
+###
+
+# 2. Check MongoDB for verification code:
+# MongoDB Atlas -> db.users.findOne({email: "admin@bildy.app"}, {verificationCode: 1})
+
+###
+
+# 3. VALIDATE EMAIL
+PUT http://localhost:3000/api/user/validation
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "code": "123456"
+}
+
+###
+
+# 4. PERSONAL DATA ONBOARDING
+PUT http://localhost:3000/api/user/register
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "name": "Admin",
+  "lastName": "Bildy",
+  "nif": "12345678Z"
+}
+
+###
+
+# 5. CREATE COMPANY
+PATCH http://localhost:3000/api/user/company
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "name": "Bildy SL",
+  "cif": "B87654321",
+  "address": {
+    "street": "Gran Vía",
+    "number": "1",
+    "postal": "28013",
+    "city": "Madrid",
+    "province": "Madrid"
+  },
+  "isFreelance": false
+}
+
+###
+
+# 6. UPLOAD COMPANY LOGO
+PATCH http://localhost:3000/api/user/logo
+Authorization: Bearer {{adminAccessToken}}
+
+logo: /path/to/logo.png
+
+###
+
+# 7. INVITE EMPLOYEE
+POST http://localhost:3000/api/user/invite
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "email": "employee@bildy.app",
+  "name": "Ana",
+  "lastName": "Martín"
+}
+
+@employeeTempPassword = {{response.body.tempPassword}}
+
+###
+
+# 8. LOGIN as employee
+POST http://localhost:3000/api/user/login
+Content-Type: application/json
+
+{
+  "email": "employee@bildy.app",
+  "password": "{{employeeTempPassword}}"
+}
+
+@employeeAccessToken = {{response.body.accessToken}}
+
+###
+
+# 9. GET FULL USER PROFILE
+GET http://localhost:3000/api/user
+Authorization: Bearer {{employeeAccessToken}}
+
+###
+
+# 10. CHANGE PASSWORD (admin)
+PUT http://localhost:3000/api/user/password
+Authorization: Bearer {{adminAccessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Admin123!",
+  "newPassword": "NewPass456!"
+}
+
+###
+
+# 11. REFRESH TOKEN
+POST http://localhost:3000/api/user/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+@newAdminToken = {{response.body.accessToken}}
+
+###
+
+# 12. SOFT DELETE
+DELETE http://localhost:3000/api/user?soft=true
+Authorization: Bearer {{newAdminToken}}
+
+###
+
+# 13. LOGOUT
+POST http://localhost:3000/api/user/logout
+Authorization: Bearer {{newAdminToken}}
+
+###
+
+# 14. HARD DELETE
+DELETE http://localhost:3000/api/user
+Authorization: Bearer {{employeeAccessToken}}
