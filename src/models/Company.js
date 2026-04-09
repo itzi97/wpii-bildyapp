@@ -27,9 +27,20 @@ const companySchema = new mongoose.Schema({
     city: String,
     province: String
   },
-  logo: { type: String },
-  isFreelance: { type: Boolean, default: false },
-  deleted: { type: Boolean, default: false, index: true }
-}, { timestamps: true });
+  logo: {
+    type: String
+  },
+  isFreelance: {
+    type: Boolean,
+    default: false
+  },
+  deleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  }
+}, {
+  timestamps: true
+});
 
 export default mongoose.model('Company', companySchema);
