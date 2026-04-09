@@ -46,11 +46,32 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email }).select('+password');
+    const user = await User.findOne({ email: req.body.email }).select('+password +refreshToken');
     if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
       return next(AppError.unauthorized('Invalid credentials'));
     }
-    res.json({ user: { email: user.email, status: user.status, role: user.role } });
+
+    // Generate tokens (same as register)
+    const accessToken = jwt.sign(
+      { id: user._id },
+      config.JWT_SECRET,
+      { expiresIn: config.JWT_EXPIRES_IN }
+    );
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      config.JWT_REFRESH_SECRET,
+      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
+    );
+
+    user.refreshToken = refreshToken; // Store for logout
+    await user.save();
+
+    res.json({
+      user: { email: user.email, status: user.status, role: user.role },
+      accessToken,
+      refreshToken
+    });
+
   } catch (error) {
     next(error);
   }

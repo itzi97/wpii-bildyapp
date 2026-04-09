@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema({
     ref: 'Company',
     index: true
   },
+  refreshToken: {
+    type: String,
+    select: false // Don't return in queries by default
+  },
   deleted: {
     type: Boolean,
     default: false,
