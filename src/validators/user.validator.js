@@ -27,3 +27,10 @@ export const emailValidationSchema = z.object({
     .string({ required_error: 'Validation code is required' })
     .trim()
 })
+
+// Personal onboarding PUT /api/user/register
+export const personalOnboardingSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required'),
+  lastName: z.string().trim().min(1, 'Last name is required'),
+  nif: z.string().trim().min(1, 'NIF is required')
+})
