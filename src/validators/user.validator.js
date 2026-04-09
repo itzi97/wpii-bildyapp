@@ -34,3 +34,19 @@ export const personalOnboardingSchema = z.object({
   lastName: z.string().trim().min(1, 'Last name is required'),
   nif: z.string().trim().min(1, 'NIF is required')
 })
+
+const addressSchema = z.object({
+  street: z.string().trim().min(1, 'Street is required'),
+  number: z.string().trim().min(1, 'Number is required'),
+  postal: z.string().trim().min(1, 'Postal code is required'),
+  city: z.string().trim().min(1, 'City is required'),
+  province: z.string().trim().min(1, 'Province is required')
+});
+
+// Company onboarding PATCH /api/user/company
+export const companyOnboardingSchema = z.object({
+  name: z.string().trim().min(1, 'Company name is required'),
+  cif: z.string().trim().min(1, 'CIF is required'),
+  address: addressSchema,
+  isFreelance: z.boolean().default(false)
+})
