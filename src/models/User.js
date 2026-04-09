@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    index: true // Explicit for clarity.
+    index: true // Explicit for clarity
   },
   password: {
     type: String,
@@ -48,12 +48,12 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     street: String,
-    number: String, // Could be 13A, for example.
+    number: String, // Could be 13A, for example
     postal: String,
     city: String,
     province: String
   },
-  // References Company model.
+  // References Company model
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
@@ -74,15 +74,28 @@ const userSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Allow empty name/lastName without breaking fullName.
+// Allow empty name/lastName without breaking fullName
 userSchema.virtual('fullName').get(function() {
   return `${this.name || ''} ${this.lastName || ''}`.trim();
 });
 
-// Hash password on save.
+// Hash password on save
 userSchema.pre('save', async function() {
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
+
+// Auto filter deleted users from queries
+//const excludeDeleted = () => {
+//  if (!this.getOptions().withDeleted) {
+//    this.where({ deleted: { $ne: true } });
+//  }
+//}
+//
+//// Don't find soft deleted entries
+//userSchema.pre('find', excludeDeleted);
+//userSchema.pre('findOne', excludeDeleted);
+//userSchema.pre('findOneAndUpdate', excludeDeleted);
+//userSchema.pre('countDocuments', excludeDeleted);
 
 export default mongoose.model('User', userSchema);
