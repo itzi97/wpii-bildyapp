@@ -1,11 +1,14 @@
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import AppError from '../utils/AppError.js';
+import config from '../config/index.js';
 
 export const register = async (req, res, next) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Create user with random verification code
     const user = new User({
       ...req.body,
       verificationCode,
@@ -13,7 +16,28 @@ export const register = async (req, res, next) => {
     });
 
     await user.save();
-    res.status(201).json({ message: 'User created', id: user._id });
+
+    const accessToken = jwt.sign(
+      { id: user._id },
+      config.JWT_SECRET,
+      { expiresIn: config.JWT_EXPIRES_IN }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      config.JWT_REFRESH_SECRET,
+      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
+    );
+
+    res.status(201).json({
+      user: {
+        email: user.email,
+        status: user.status,
+        role: user.role
+      },
+      accessToken,
+      refreshToken
+    });
   } catch (error) {
     if (error.code === 11000) return next(AppError.conflict('Email exists'));
     next(error);
@@ -34,9 +58,7 @@ export const login = async (req, res, next) => {
 
 export const validateEmail = async (req, res, next) => {
   try {
-    // TODO: Get user from auth middleware (req.user)
-    // TEST: Hardcoded user, remove later
-    const user = await User.findById('69d665ce7bbb1def04637317');
+    const user = await User.findById(req.user.id);
 
     if (!user || user.status === 'verified') {
       return next(AppError.badRequest('Invalid or already verified'));
