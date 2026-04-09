@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    index: true // Redundant, keep explicit for clarity.
+    index: true // Explicit for clarity.
   },
   password: {
     type: String,
@@ -48,12 +48,12 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     street: String,
-    number: String, // Could be 13A for example.
+    number: String, // Could be 13A, for example.
     postal: String,
     city: String,
     province: String
   },
-  // References Company model (declared in Company.js).
+  // References Company model.
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
@@ -81,6 +81,6 @@ userSchema.pre('save', async function(next) {
 
   this.password = await bcrypt.hash(this.password, 12);
   next();
-})
+});
 
 export default mongoose.model('User', userSchema);
