@@ -86,7 +86,7 @@ userSchema.pre('save', async function() {
 });
 
 // Auto filter deleted users from queries
-const excludeDeleted = () => {
+const excludeDeleted = function() {
   if (!this.getOptions().withDeleted) {
     this.where({ deleted: { $ne: true } });
   }

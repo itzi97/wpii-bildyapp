@@ -333,7 +333,7 @@ export const uploadLogo = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
-    const soft = req.query.soft === true;
+    const soft = req.query.soft === 'true';
 
     if (soft) {
       // Soft delete
