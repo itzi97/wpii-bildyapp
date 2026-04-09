@@ -104,7 +104,7 @@ export const validateEmail = async (req, res, next) => {
     user.verificationAttempts = 0;
     await user.save();
 
-    notificationService.emite('user:verified', user);
+    notificationService.emit('user:verified', user);
 
     res.json({ message: 'Email verified succesfully' });
   } catch (error) {
