@@ -316,3 +316,31 @@ export const uploadLogo = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const soft = req.query.soft === 'true';
+
+    if (soft) {
+      // Soft delete
+      await User.findByIdAndUpdate(req.user._id, {
+        deleted: true
+      });
+      res.json({
+        ack: true,
+        message: 'User soft deleted successfully'
+      });
+    } else {
+      // Hard delete
+      await User.findByIdAndDelete(req.user._id);
+      res.status(204).send();
+    }
+
+    notificationService.emite('user:deleted', {
+      userId: req.user._id,
+      soft: soft
+    });
+  } catch (error) {
+    next(error);
+  }
+};

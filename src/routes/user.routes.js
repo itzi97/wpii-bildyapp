@@ -9,7 +9,8 @@ import {
   updatePersonalData,
   updateCompany,
   refreshToken,
-  uploadLogo
+  uploadLogo,
+  deleteUser
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
@@ -50,19 +51,13 @@ router.patch(
 
 router.patch('/logo', authenticateToken, upload.single('logo'), uploadLogo);
 
-// TODO: Implement.
 router.get('/', authenticateToken, getCurrentUser);
 
-// TEST: In process of being tested
 router.post('/refresh', refreshToken);
 
-// TODO: Implement.
 router.post('/logout', authenticateToken, logout);
 
-// TODO: Implement.
-router.delete('/', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.delete('/', authenticateToken, deleteUser);
 
 // TODO: Implement.
 router.put('/password', (req, res) => {
