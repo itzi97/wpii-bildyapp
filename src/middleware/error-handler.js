@@ -2,6 +2,7 @@ import AppError from '../utils/AppError.js';
 
 // Centralized Express error middleware (API response consistency).
 export default function errorHandler(err, req, res, next) {
+  // If it is already one of our application errors, keep its data.
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.code,
