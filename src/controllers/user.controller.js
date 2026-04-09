@@ -120,7 +120,10 @@ export const validateEmail = async (req, res, next) => {
       email: user.email
     });
 
-    res.status(200).json({ message: 'Email verified successfully' });
+    res.status(200).json({
+      ack: true,
+      message: 'Email verified successfully'
+    });
   } catch (error) {
     next(error);
   }
@@ -128,7 +131,7 @@ export const validateEmail = async (req, res, next) => {
 
 export const getCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id)
+    const user = await User.findById(req.user._id)
       .populate('company')
       .select('-password -verificationCode -verificationAttempts');
 
@@ -144,7 +147,7 @@ export const getCurrentUser = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    await User.findByIdAndUpdate(req.user.id, { refreshToken: null });
+    await User.findByIdAndUpdate(req.user._id, { refreshToken: null });
 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
