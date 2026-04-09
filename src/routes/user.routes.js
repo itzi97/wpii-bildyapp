@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { register } from '../controllers/user.controller.js';
-import { registerSchema } from '../validators/user.validator.js';
+import { register, login } from '../controllers/user.controller.js';
+import { registerSchema, loginSchema } from '../validators/user.validator.js';
 import validate from '../middleware/validate.js';
 
 const router = Router();
 
-// TEST: Testing if route works.
 router.post('/register', validate(registerSchema), register);
 
 // TODO: Implement.
@@ -13,10 +12,8 @@ router.put('/validation', (req, res) => {
   res.status(501).json({ message: 'Not implemented yet' });
 });
 
-// TODO: Implement.
-router.post('/login', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+// TEST: test login route
+router.post('/login', validate(loginSchema), login);
 
 // TODO: Implement.
 router.put('/register/profile', (req, res) => {
