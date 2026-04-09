@@ -86,16 +86,16 @@ userSchema.pre('save', async function() {
 });
 
 // Auto filter deleted users from queries
-//const excludeDeleted = () => {
-//  if (!this.getOptions().withDeleted) {
-//    this.where({ deleted: { $ne: true } });
-//  }
-//}
-//
-//// Don't find soft deleted entries
-//userSchema.pre('find', excludeDeleted);
-//userSchema.pre('findOne', excludeDeleted);
-//userSchema.pre('findOneAndUpdate', excludeDeleted);
-//userSchema.pre('countDocuments', excludeDeleted);
+const excludeDeleted = () => {
+  if (!this.getOptions().withDeleted) {
+    this.where({ deleted: { $ne: true } });
+  }
+}
+
+// Don't find soft deleted entries
+userSchema.pre('find', excludeDeleted);
+userSchema.pre('findOne', excludeDeleted);
+userSchema.pre('findOneAndUpdate', excludeDeleted);
+userSchema.pre('countDocuments', excludeDeleted);
 
 export default mongoose.model('User', userSchema);

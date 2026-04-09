@@ -333,17 +333,28 @@ export const uploadLogo = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
-    const soft = req.query.soft === 'true';
+    const soft = req.query.soft === true;
 
     if (soft) {
       // Soft delete
-      await User.findByIdAndUpdate(req.user._id, { deleted: true });
-      res.json({ ack: true, message: 'User soft deleted successfully' });
-    } else {
-      // Hard delete
-      await User.findByIdAndDelete(req.user._id);
-      res.status(204).send();
+      await User.findByIdAndUpdate(
+        req.user._id,
+        { deleted: true },
+        { new: true, runValidators: true, withDeleted: true }
+      );
+
+      notificationService.emit('user:deleted', {
+        userId: req.user._id,
+        email: req.user.email,
+        soft: true
+      });
+
+      return res.json({ ack: true, message: 'User soft deleted successfully' });
     }
+
+    await User
+      .findByIdAndDelete(req.user._id)
+      .setOptions({ withDeleted: true });
 
     notificationService.emit('user:deleted', {
       userId: req.user._id,
@@ -351,6 +362,7 @@ export const deleteUser = async (req, res, next) => {
       soft: soft
     });
 
+    return res.status(204).send();
   } catch (error) {
     next(error);
   }
