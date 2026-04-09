@@ -1,49 +1,97 @@
 # BildyApp User Management API
 
-Backend API for the BildyApp user management module built with Node.js, Express and MongoDB.
+REST API backend for BildyApp user management. Complete user lifecycle from registration to admin invites, built with Node.js 22, Express 5, and MongoDB Atlas.
 
-
-## Setup
+## Quick Start
 
 ```bash
+git clone https://github.com/itzi97/wpii-bildyapp
+cd bildyapp-api
 npm install
 cp .env.example .env
-```
-
-Fill `.env` with MongoDB URI, JWT secrets and app config.
-
-## Run locally
-
-```bash
-npm install
 npm run dev
 ```
 
-Server runs on `http://localhost:3000`.
+Server runs on `http://localhost:3000/api/user`.
 
+## Tech Stack
 
-## Current progress
+- Node.js 22+ ESM (`--watch --env-file=.env`)
+- Express 5 + middleware chain
+- MongoDB Atlas + Mongoose (populate, virtuals, indexes)
+- JWT auth (access + refresh tokens)
+- Zod validation (`.transform()`, `.refine()`)
+- Multer file uploads
+- Helmet + rate limiting
 
-- User registration with JWT access and refresh tokens
-- Email validation with verification code and attempt limit
-- Login with hashed passwords using bcryptjs
-- Protected password change endpoint with Zod `.refine()`
-- Centralized error handling with `AppError`
-- Request validation with Zod
-- MongoDB models with Mongoose, indexes and virtual `fullName`
-- Security middleware with Helmet, rate limiting and custom sanitization
+## Environment
 
-## API examples
+Copy `.env.example` and fill:
 
-TODO: Example requests are included in `bildyapp.http`.
+```bash
+MONGODB_URI=...
+JWT_SECRET=...
+JWT_REFRESH_SECRET=...
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+PORT=3000
+```
+## API Flow
 
-## Security note
+1. **Register** -> `POST /api/user/register` (JWT + 6-digit code)
+2. **Validate** -> `PUT /api/user/validation` (check MongoDB for code)  
+3. **Onboard** -> `PUT /api/user/register` (personal) + `PATCH /api/user/company` (CIF lookup)
+4. **Upload** -> `PATCH /api/user/logo` (Multer)
+5. **Admin** -> `POST /api/user/invite` (creates guest users)
+6. **Session** -> `POST /api/user/refresh`, `POST /api/user/logout`
+7. **Delete** -> `DELETE /api/user?soft=true` (soft delete)
 
-The assignment requires Helmet, express-rate-limit and express-mongo-sanitize.
-Helmet and express-rate-limit are used directly.
+Full examples in `requests.http`.
 
-For sanitization, express-mongo-sanitize was tested but caused incompatibility
-with Express 5 because it attempts to mutate `req.query`, which is read-only in 
-Express 5. A custom sanitization middleware was implemented following class 
-notes (T6 sanitization pattern) to preserve NoSQL injection protection on 
-`req.body` and `req.params`.
+## Project Structure
+
+```
+bildyapp-api/
+├── src/
+│   ├── config/
+│   │   └── index.js            # Centralized configuration
+│   ├── controllers/
+│   │   └── user.controller.js
+│   ├── middleware/
+│   │   ├── auth.middleware.js  # JWT verification
+│   │   ├── error-handler.js    # Centralized middleware for errors
+│   │   ├── role.middleware.js  # Role authorization
+│   │   ├── upload.js           # Multer configuration
+│   │   └── validate.js         # Zod middleware validation
+│   ├── models/
+│   │   ├── User.js             # Mongoose Model (virtuals and indixes)
+│   │   └── Company.js          # Mongoose Model
+│   ├── routes/
+│   │   └── user.routes.js
+│   ├── services/
+│   │   └── notification.service.js  # EventEmitter for user events
+│   ├── utils/
+│   │   └── AppError.js         # Personalized error class
+│   ├── validators/
+│   │   └── user.validator.js   # Zod schemes (with transform and refine)
+│   ├── app.js                  # Express configuration
+│   └── index.js                # Entrypoint
+├── uploads/                    # Uploaded files (such as logo)
+├── .env                        # Not included in git
+├── .env.example
+├── .gitignore
+├── package.json
+└── README.md
+```
+
+## Scripts
+
+```json
+{
+  "dev": "node --watch --env-file=.env src/index.js",
+  "start": "node --env-file=.env src/index.js"
+}
+```
+
+---
+UTAD Web Programming II Server assignment | Node.js + Express 5 + MongoDB
