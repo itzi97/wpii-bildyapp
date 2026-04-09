@@ -34,7 +34,7 @@ export const personalOnboardingSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   lastName: z.string().trim().min(1, 'Last name is required'),
   nif: z
-    .string()
+    .string({ required_error: 'NIF is required' })
     .trim()
     .min(1, 'NIF is required')
     .min(8, 'NIF must be at least 8 characters')
@@ -69,7 +69,8 @@ export const changePasswordSchema = z
     newPassword: z
       .string({ required_error: 'New password is required' })
       .min(8, 'New password must be at least 8 characters')
-  }).refine((data) => data.currentPassword !== data.newPassword, {
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
     message: 'New password must be different from current password',
     path: ['newPassword']
   });
