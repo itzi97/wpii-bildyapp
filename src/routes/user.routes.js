@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
-import { authorizeRoles } from '../middleware/role.middleware.js'
+import { authorizeRoles } from '../middleware/role.middleware.js';
 import { upload } from '../middleware/upload.js';
-import validate from '../middleware/validate.js';
+import { validate } from '../middleware/validate.js';
 import {
   register,
   validateEmail,
@@ -23,8 +23,10 @@ import {
   loginSchema,
   personalOnboardingSchema,
   companyOnboardingSchema,
+  refreshTokenSchema,
   changePasswordSchema,
-  inviteUserSchema
+  inviteUserSchema,
+  deleteUserSchema
 } from '../validators/user.validator.js';
 
 const router = Router();
@@ -58,11 +60,16 @@ router.patch('/logo', authenticateToken, upload.single('logo'), uploadLogo);
 
 router.get('/', authenticateToken, getCurrentUser);
 
-router.post('/refresh', refreshToken);
+router.post('/refresh', validate(refreshTokenSchema), refreshToken);
 
 router.post('/logout', authenticateToken, logout);
 
-router.delete('/', authenticateToken, deleteUser);
+router.delete(
+  '/',
+  authenticateToken,
+  validate(deleteUserSchema),
+  deleteUser
+);
 
 router.put(
   '/password',
