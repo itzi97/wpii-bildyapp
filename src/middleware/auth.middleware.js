@@ -1,3 +1,4 @@
+import config from '../config/index.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import AppError from '../utils/AppError.js';
@@ -22,7 +23,7 @@ export const authenticateToken = async (req, res, next) => {
 
   try {
     // Verify token and decode payload.
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, config.JWT_SECRET);
 
     // Look up the user in database.
     const user = await User.findById(decoded.id);

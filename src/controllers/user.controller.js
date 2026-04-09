@@ -365,7 +365,8 @@ export const changePassword = async (req, res, next) => {
       return next(AppError.unauthorized('Current password incorrect'));
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Store hashed password
+    user.password = newPassword;
     await user.save();
 
     res.json({
