@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  address: {
+    street: String,
+    number: String, // Could be 13A for example.
+    postal: String,
+    city: String,
+    province: String
+  },
   // References Company model (declared in Company.js).
   company: {
     type: mongoose.Schema.Types.ObjectId,
