@@ -1,4 +1,4 @@
-// Custom application error, API error responses santardized this way.
+// Custom application error, API error responses standardized this way.
 export default class AppError extends Error {
   constructor(message, statusCode = 500, code = 'INTERNAL_ERROR') {
     super(message);
