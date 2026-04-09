@@ -34,6 +34,9 @@ export const register = async (req, res, next) => {
       { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
     );
 
+    user.refreshToken = refreshToken;
+    await user.save();
+
     res.status(201).json({
       user: {
         email: user.email,
@@ -207,47 +210,29 @@ export const updateCompany = async (req, res, next) => {
       return next(AppError.notFound('User not found'));
     }
 
-    let company;
+    const { name, cif, address, isFreelance } = req.body;
 
-    if (req.body.isFreelance) {
-      company = await Company.findOne({ cif: user.nif });
+    let company = await Company.findOne({ cif });
 
-      if (!company) {
-        company = await Company.create({
-          owner: user._id,
-          name: `${user.name} ${user.lastName}`.trim(),
-          cif: user.nif,
-          address: user.address,
-          isFreelance: true
-        });
-      }
+    if (!company) {
+      company = await Company.create({
+        owner: user._id,
+        name,
+        cif,
+        address,
+        isFreelance
+      });
+
+      user.company = company._id;
     } else {
-      company = await Company.findOne({ cif: req.body.cif });
-
-      if (!company) {
-        company = await Company.create({
-          owner: user._id,
-          name: req.body.name,
-          cif: req.body.cif,
-          address: req.body.address,
-          isFreelance: false
-        });
-      } else {
-        user.role = 'guest';
-      }
+      user.company = company._id;
+      user.role = 'guest';
     }
 
-    user.company = company._id;
     await user.save();
 
-    notificationService.emit('user:updated', {
-      userId: user._id,
-      companyId: company._id,
-      updatedFields: ['company']
-    });
-
     res.status(200).json({
-      message: 'Company created successfully',
+      message: company._id ? 'Company created successfully' : 'Joined existing company',
       company: {
         _id: company._id,
         name: company.name,
