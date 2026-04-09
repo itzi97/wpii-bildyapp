@@ -36,6 +36,6 @@ export const authenticateToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return next(AppError.forbidden('Invalid or expired token'))
+    return next(AppError.unauthorized('Invalid or expired token'))
   }
 };

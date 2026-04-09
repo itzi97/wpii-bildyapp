@@ -358,7 +358,11 @@ export const deleteUser = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
+
     const user = await User.findById(req.user._id).select('+password');
+
+    // Check if user actually exists
+    if (!user) return next(AppError.notFound('User not found'));
 
     const valid = await bcrypt.compare(currentPassword, user.password);
     if (!valid) {
