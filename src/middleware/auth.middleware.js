@@ -18,7 +18,7 @@ export const authenticateToken = async (req, res, next) => {
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      return res.statjs(401).json({ error: 'User not found' });
+      return res.status(401).json({ error: 'User not found' });
     }
 
     // Attach authenticated user to request object.

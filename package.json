@@ -4,8 +4,12 @@
   "description": "REST API for BildyApp user management",
   "type": "module",
   "main": "src/index.js",
-  "scripts": { "dev": "node --watch --env-file=.env src/index.js" },
-  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/index.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "keywords": [
     "node",
     "express",
