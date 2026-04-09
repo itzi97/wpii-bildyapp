@@ -4,7 +4,8 @@ import {
   register,
   validateEmail,
   login,
-  getCurrentUser
+  getCurrentUser,
+  logout
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
@@ -50,9 +51,7 @@ router.post('/refresh', (req, res) => {
 });
 
 // TODO: Implement.
-router.post('/logout', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.post('/logout', authenticateToken, logout);
 
 // TODO: Implement.
 router.delete('/', (req, res) => {

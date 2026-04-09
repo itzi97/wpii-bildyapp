@@ -127,3 +127,13 @@ export const getCurrentUser = async (req, res, next) => {
     next(error)
   }
 };
+
+export const logout = async (req, res, next) => {
+  try {
+    await User.findByIdAndUpdate(req.user.id, { refreshToken: null });
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
