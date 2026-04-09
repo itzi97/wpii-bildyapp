@@ -5,12 +5,14 @@ import {
   validateEmail,
   login,
   getCurrentUser,
-  logout
+  logout,
+  updatePersonalData
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
   emailValidationSchema,
-  loginSchema
+  loginSchema,
+  personalOnboardingSchema
 } from '../validators/user.validator.js';
 import validate from '../middleware/validate.js';
 
@@ -27,10 +29,12 @@ router.put(
 
 router.post('/login', validate(loginSchema), login);
 
-// TODO: Implement.
-router.put('/register/profile', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.put(
+  '/register',
+  authenticateToken,
+  validate(personalOnboardingSchema),
+  updatePersonalData
+);
 
 // TODO: Implement.
 router.patch('/company', (req, res) => {

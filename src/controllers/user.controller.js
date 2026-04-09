@@ -154,3 +154,32 @@ export const logout = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updatePersonalData = async (req, res, next) => {
+  try {
+    const { name, lastName, nif } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, lastName, nif },
+      { new: true, runValidators: true }
+    );
+
+    notificationService.emit('user:updated', {
+      userId: user._id,
+      updatedFields: ['name', 'lastName', 'nif']
+    });
+
+    res.status(200).json({
+      message: 'Personal data updated successfully',
+      user: {
+        email: user.email,
+        fullName: user.fullName,
+        status: user.status,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
