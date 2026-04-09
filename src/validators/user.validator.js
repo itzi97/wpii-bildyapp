@@ -20,3 +20,10 @@ export const loginSchema = z.object({
   password: z
     .string({ required_error: 'Password is required' })
 })
+
+// Email validation PUT /api/user/validation
+export const emailValidationSchema = z.object({
+  code: z
+    .string({ required_error: 'Validation code is required' })
+    .trim()
+})
