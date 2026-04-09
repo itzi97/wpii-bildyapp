@@ -51,8 +51,22 @@ export const register = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const user = await User.findOne({ email: req.body.email }).select('+password +refreshToken');
-    if (!user || user.deleted || !(await bcrypt.compare(req.body.password, user.password))) {
+    const { email, password } = req.body;
+
+    // Find user and select password
+    const user = await User.findOne({ email: email }).select('+password +refreshToken');
+    if (!user) {
+      return next(AppError.unauthorized('Invalid credentials'));
+    }
+
+    // Check status
+    if (user.status !== 'verified') {
+      return next(AppError.unauthorized('Email not verified'));
+    }
+
+    // Check password
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
       return next(AppError.unauthorized('Invalid credentials'));
     }
 
@@ -338,5 +352,27 @@ export const deleteUser = async (req, res, next) => {
 
   } catch (error) {
     next(error);
+  }
+};
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id).select('+password');
+
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      return next(AppError.unauthorized('Current password incorrect'));
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.json({
+      ack: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    next(error)
   }
 };

@@ -10,14 +10,16 @@ import {
   updateCompany,
   refreshToken,
   uploadLogo,
-  deleteUser
+  deleteUser,
+  changePassword
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
   emailValidationSchema,
   loginSchema,
   personalOnboardingSchema,
-  companyOnboardingSchema
+  companyOnboardingSchema,
+  changePasswordSchema
 } from '../validators/user.validator.js';
 import validate from '../middleware/validate.js';
 import { upload } from '../middleware/upload.js';
@@ -59,10 +61,12 @@ router.post('/logout', authenticateToken, logout);
 
 router.delete('/', authenticateToken, deleteUser);
 
-// TODO: Implement.
-router.put('/password', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+router.put(
+  '/password',
+  authenticateToken,
+  validate(changePasswordSchema),
+  changePassword
+);
 
 // TODO: Implement.
 router.post('/invite', (req, res) => {
