@@ -41,6 +41,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  nif: {
+    type: String,
+    trim: true
+  },
   // References Company model (declared in Company.js).
   company: {
     type: mongoose.Schema.Types.ObjectId,
