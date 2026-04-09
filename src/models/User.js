@@ -77,17 +77,8 @@ userSchema.virtual('fullName').get(function() {
 
 // Hash password on save.
 userSchema.pre('save', async function() {
-  // TEST: Console logs for testing login fail
-  console.log('pre-save hook triggered');
-  console.log('password before hash:', this.password);
-
-  if (!this.isModified('password')) {
-    console.log('password not modified, skipping');
-    return;
-  }
-
-  this.password = bcrypt.hash(this.password, 12);
-  console.log('password after hash:', this.password);
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 10);
 });
 
 export default mongoose.model('User', userSchema);
