@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import AppError from '../utils/AppError.js';
 import config from '../config/index.js';
+import notificationService from '../services/notification.service.js';
 
 export const register = async (req, res, next) => {
   try {
@@ -16,6 +17,9 @@ export const register = async (req, res, next) => {
     });
 
     await user.save();
+
+    // User registered notification being sent after user is saved
+    notificationService.emit('user:registered', user);
 
     const accessToken = jwt.sign(
       { id: user._id },
@@ -99,6 +103,8 @@ export const validateEmail = async (req, res, next) => {
     user.verificationCode = undefined;
     user.verificationAttempts = 0;
     await user.save();
+
+    notificationService.emite('user:verified', user);
 
     res.json({ message: 'Email verified succesfully' });
   } catch (error) {
