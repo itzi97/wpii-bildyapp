@@ -187,8 +187,41 @@ export const updatePersonalData = async (req, res, next) => {
 
 export const updateCompany = async (req, res, next) => {
   try {
-    res.status(501).json({ message: 'Not implemented yet' });
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return next(AppError.notFound('User not found'));
+    }
+
+    if (!req.body.isFreelance) {
+      return res.status(501).json({ message: 'Not implemented yet' });
+    }
+
+    const company = await Company.create({
+      owner: user._id,
+      name: `${user.name} ${user.lastName}`.trim(),
+      cif: user.nif,
+      address: user.address,
+      isFreelance: true
+    });
+
+    user.company = company._id;
+    await user.save();
+
+    res.status(200).json({
+      message: 'Freelance company created successfully',
+      company: {
+        _id: company._id,
+        name: company.name,
+        cif: company.cif,
+        isFreelance: company.isFreelance
+      },
+      role: user.role
+    });
   } catch (error) {
+    if (error.code === 11000) {
+      return next(AppError.conflict('Company already exists'));
+    }
     next(error);
   }
 };
