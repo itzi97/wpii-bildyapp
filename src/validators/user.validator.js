@@ -19,15 +19,15 @@ export const loginSchema = z.object({
     .transform((val) => val.toLowerCase().trim()),
   password: z
     .string({ required_error: 'Password is required' })
-})
+});
 
 // Email validation PUT /api/user/validation
 export const emailValidationSchema = z.object({
   code: z
     .string({ required_error: 'Validation code is required' })
     .trim()
-    .regex(/^\d{6}/, 'Validation code must be exactly 6 digits')
-})
+    .regex(/^\d{6}$/, 'Validation code must be exactly 6 digits')
+});
 
 // Personal onboarding PUT /api/user/register
 export const personalOnboardingSchema = z.object({
@@ -38,7 +38,7 @@ export const personalOnboardingSchema = z.object({
     .trim()
     .min(1, 'NIF is required')
     .min(8, 'NIF must be at least 8 characters')
-})
+});
 
 const addressSchema = z.object({
   street: z.string().trim().min(1, 'Street is required'),
