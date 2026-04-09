@@ -24,3 +24,34 @@ export const login = async (req, res, next) => {
     next(error);
   }
 };
+
+export const validateEmail = async (req, res, next) => {
+  try {
+    // TODO: Get user from auth middleware (req.user)
+    // TEST: Hardcoded user, remove later
+    const user = await User.findById('69d665ce7bbb1def04637317');
+
+    if (!user || user.status === 'verified') {
+      return next(AppError.badRequest('Invalid or already verified'));
+    }
+
+    if (user.verificationCode !== req.body.code) {
+      user.verificationAttempts -= 1;
+      await user.save();
+
+      if (user.verificationAttempts <= 0) {
+        return next(AppError.tooManyRequests('Too many attempts'));
+      }
+      return next(AppError.badRequest('Invalid code'));
+    }
+
+    user.status = 'verified';
+    user.verificationCode = undefined;
+    user.verificationAttempts = 0;
+    await user.save();
+
+    res.json({ message: 'Email verified succesfully' });
+  } catch (error) {
+    next(error);
+  }
+};
