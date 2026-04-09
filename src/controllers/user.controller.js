@@ -4,7 +4,14 @@ import AppError from '../utils/AppError.js';
 
 export const register = async (req, res, next) => {
   try {
-    const user = new User(req.body);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const user = new User({
+      ...req.body,
+      verificationCode,
+      verificationAttempts: 3
+    });
+
     await user.save();
     res.status(201).json({ message: 'User created', id: user._id });
   } catch (error) {
