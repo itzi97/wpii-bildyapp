@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    index: true
+    index: true // Redundant, keep explicit for clarity.
   },
   password: { type: String, required: true, select: false },
   role: {
@@ -21,7 +21,20 @@ const userSchema = new mongoose.Schema({
     enum: ['pending', 'verified'],
     default: 'pending',
     index: true
-  }
-}, { timestamps: true });
+  },
+  verificationCode: { type: String },
+  verificationAttempts: { type: Number, default: 3 },
+  name: { type: String, trim: true },
+  lastName: { type: String, trim: true }
+}, {
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Allow empty name/lastName without breaking fullName.
+userSchema.virtual('fullName').get(function() {
+  return `${this.name || ''} ${this.lastName || ''}`.trim();
+});
 
 export default mongoose.model('User', userSchema);
