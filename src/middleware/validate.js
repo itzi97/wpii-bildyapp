@@ -1,20 +1,24 @@
-import AppError from '../utils/AppError.js';
-
 // Validate request bodies with Zod.
-export default function validate(schema) {
-  return (req, res, next) => {
-    const result = schema.safeParse(req.body);
-
-    if (!result.success) {
-      const message = result.error.issues
-        .map((issue) => `${issue.path.join('.') || 'body'}: ${issue.message}`)
-        .join(', ');
-
-      return next(AppError.badRequest(message, 'VALIDATION_ERROR'));
-    }
-
-    // Used parsed data, transforms/normalization from Zod preserved.
-    req.body = result.data;
+const validate = (schema) => (req, res, next) => {
+  try {
+    req.body = schema.parse(req.body);
     next();
-  };
+  } catch (error) {
+    const errors = error.errors.map((e) => ({
+      field: e.path.join('.'),
+      message: e.message
+    }));
+
+    // TODO: Should I use AppError here? In T6 it's direct
+    // I'm asuming it has to do with short-circuit and return 400 skipping
+    // passing control to errorHandler
+    res.status(400).json({
+      error: true,
+      message: 'Validation error',
+      code: 'VALIDATION_ERROR',
+      details: errors
+    });
+  }
 }
+
+export default validate;

@@ -5,6 +5,15 @@ import AppError from '../utils/AppError.js';
 // Middleware to check access token sent in Authorization header.
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: true,
+      message: 'Token required',
+      code: 'UNAUTHORIZED'
+    });
+  }
+
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
