@@ -50,3 +50,16 @@ export const companyOnboardingSchema = z.object({
   address: addressSchema,
   isFreelance: z.boolean().default(false)
 })
+
+// Change password PUT /api/user/password
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string({ required_error: 'Current password is required' }),
+    newPassword: z
+      .string({ required_error: 'New password is required' })
+      .min(8, 'New password must be at least 8 characters')
+  }).refine((data) => data.currentPassword !== data.newPassword, {
+    message: 'New password must be different from current password',
+    path: ['newPassword']
+  });
