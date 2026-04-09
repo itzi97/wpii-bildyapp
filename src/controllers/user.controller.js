@@ -249,3 +249,45 @@ export const updateCompany = async (req, res, next) => {
     next(error);
   }
 };
+
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return next(AppError.unauthorized('Refresh token required'));
+    }
+
+    const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.id).select('+refreshToken');
+
+    if (!user || user.refreshToken !== refreshToken) {
+      return next(AppError.unauthorized('Invalid refresh token'));
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: user._id },
+      config.JWT_SECRET,
+      { expiresIn: config.JWT_EXPIRES_IN }
+    );
+
+    const newRefreshToken = jwt.sign(
+      { id: user._id },
+      config.JWT_REFRESH_SECRET,
+      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
+    );
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return next(AppError.unauthorized('Invalid refresh token'));
+    }
+    next(error);
+  }
+};

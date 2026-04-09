@@ -7,7 +7,8 @@ import {
   getCurrentUser,
   logout,
   updatePersonalData,
-  updateCompany
+  updateCompany,
+  refreshToken
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
@@ -38,7 +39,6 @@ router.put(
   updatePersonalData
 );
 
-// TEST: In proess of testing route
 router.patch(
   '/company',
   authenticateToken,
@@ -54,10 +54,8 @@ router.patch('/logo', (req, res) => {
 // TODO: Implement.
 router.get('/', authenticateToken, getCurrentUser);
 
-// TODO: Implement.
-router.post('/refresh', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+// TEST: In process of being tested
+router.post('/refresh', refreshToken);
 
 // TODO: Implement.
 router.post('/logout', authenticateToken, logout);
