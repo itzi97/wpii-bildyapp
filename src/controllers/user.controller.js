@@ -106,7 +106,7 @@ export const validateEmail = async (req, res, next) => {
 
     notificationService.emit('user:verified', user);
 
-    res.json({ message: 'Email verified succesfully' });
+    res.json({ message: 'Email verified successfully' });
   } catch (error) {
     next(error);
   }
