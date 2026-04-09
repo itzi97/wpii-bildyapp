@@ -347,6 +347,7 @@ export const deleteUser = async (req, res, next) => {
 
     notificationService.emit('user:deleted', {
       userId: req.user._id,
+      email: req.user.email,
       soft: soft
     });
 
@@ -379,5 +380,66 @@ export const changePassword = async (req, res, next) => {
     });
   } catch (error) {
     next(error)
+  }
+};
+
+export const inviteUser = async (req, res, next) => {
+  try {
+    const inviter = await User.findById(req.user._id);
+
+    if (!inviter) {
+      return next(AppError.notFound('Inviter not found'));
+    }
+
+    if (!inviter.company) {
+      return next(AppError.badRequest('Admin must belong to a company'));
+    }
+
+    const { email, name, lastName } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return next(AppError.conflict('Email already registered or invited'));
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const tempPassword = Math.random().toString(36).slice(-10);
+
+    const invitedUser = new User({
+      email,
+      password: tempPassword,
+      name,
+      lastName,
+      company: inviter.company,
+      role: 'guest',
+      status: 'pending',
+      verificationCode,
+      verificationAttempts: 3
+    });
+
+    await invitedUser.save();
+
+    notificationService.emit('user:invited', {
+      email: invitedUser.email,
+      invitedBy: inviter._id,
+      company: inviter.company
+    });
+
+    res.status(201).json({
+      ack: true,
+      message: 'User invited successfully',
+      user: {
+        email: invitedUser.email,
+        role: invitedUser.role,
+        status: invitedUser.status,
+        company: invitedUser.company
+      },
+      tempPassword
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return next(AppError.conflict('Email already registered'));
+    }
+    next(error);
   }
 };

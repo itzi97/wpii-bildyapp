@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authorizeRoles } from '../middleware/role.middleware.js'
+import { upload } from '../middleware/upload.js';
+import validate from '../middleware/validate.js';
 import {
   register,
   validateEmail,
@@ -11,7 +14,8 @@ import {
   refreshToken,
   uploadLogo,
   deleteUser,
-  changePassword
+  changePassword,
+  inviteUser
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
@@ -19,10 +23,9 @@ import {
   loginSchema,
   personalOnboardingSchema,
   companyOnboardingSchema,
-  changePasswordSchema
+  changePasswordSchema,
+  inviteUserSchema
 } from '../validators/user.validator.js';
-import validate from '../middleware/validate.js';
-import { upload } from '../middleware/upload.js';
 
 const router = Router();
 
