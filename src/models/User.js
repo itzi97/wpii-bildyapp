@@ -41,6 +41,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // References Company model (declared in Company.js).
+  company: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    index: true
+  },
   deleted: {
     type: Boolean,
     default: false,
