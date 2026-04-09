@@ -63,3 +63,13 @@ export const changePasswordSchema = z
     message: 'New password must be different from current password',
     path: ['newPassword']
   });
+
+// Invite teammate POST /api/user/invite
+export const inviteUserSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .email('Must be a valid email')
+    .transform((val) => val.toLowerCase().trim()),
+  name: z.string().trim().min(1, 'Name is required'),
+  lastName: z.string().trim().min(1, 'Last name is required')
+});
