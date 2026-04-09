@@ -150,7 +150,7 @@ export const logout = async (req, res, next) => {
   try {
     await User.findByIdAndUpdate(req.user._id, { refreshToken: null });
 
-    res.json({ message: 'Logged out successfully' });
+    res.json({ ack: true, message: 'Logged out successfully' });
   } catch (error) {
     next(error);
   }
