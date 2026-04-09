@@ -6,13 +6,15 @@ import {
   login,
   getCurrentUser,
   logout,
-  updatePersonalData
+  updatePersonalData,
+  updateCompany
 } from '../controllers/user.controller.js';
 import {
   registerSchema,
   emailValidationSchema,
   loginSchema,
-  personalOnboardingSchema
+  personalOnboardingSchema,
+  companyOnboardingSchema
 } from '../validators/user.validator.js';
 import validate from '../middleware/validate.js';
 
@@ -36,10 +38,13 @@ router.put(
   updatePersonalData
 );
 
-// TODO: Implement.
-router.patch('/company', (req, res) => {
-  res.status(501).json({ message: 'Not implemented yet' });
-});
+// TEST: In proess of testing route
+router.patch(
+  '/company',
+  authenticateToken,
+  validate(companyOnboardingSchema),
+  updateCompany
+);
 
 // TODO: Implement.
 router.patch('/logo', (req, res) => {

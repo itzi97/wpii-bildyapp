@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Company from '../models/Company.js';
 import AppError from '../utils/AppError.js';
 import config from '../config/index.js';
 import notificationService from '../services/notification.service.js';
@@ -183,3 +184,11 @@ export const updatePersonalData = async (req, res, next) => {
     next(error);
   }
 }
+
+export const updateCompany = async (req, res, next) => {
+  try {
+    res.status(501).json({ message: 'Not implemented yet' });
+  } catch (error) {
+    next(error);
+  }
+};
