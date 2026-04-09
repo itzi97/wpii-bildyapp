@@ -193,23 +193,47 @@ export const updateCompany = async (req, res, next) => {
       return next(AppError.notFound('User not found'));
     }
 
-    if (!req.body.isFreelance) {
-      return res.status(501).json({ message: 'Not implemented yet' });
-    }
+    let company;
 
-    const company = await Company.create({
-      owner: user._id,
-      name: `${user.name} ${user.lastName}`.trim(),
-      cif: user.nif,
-      address: user.address,
-      isFreelance: true
-    });
+    if (req.body.isFreelance) {
+      company = await Company.findOne({ cif: user.nif });
+
+      if (!company) {
+        company = await Company.create({
+          owner: user._id,
+          name: `${user.name} ${user.lastName}`.trim(),
+          cif: user.nif,
+          address: user.address,
+          isFreelance: true
+        });
+      }
+    } else {
+      company = await Company.findOne({ cif: req.body.cif });
+
+      if (!company) {
+        company = await Company.create({
+          owner: user._id,
+          name: req.body.name,
+          cif: req.body.cif,
+          address: req.body.address,
+          isFreelance: false
+        });
+      } else {
+        user.role = 'guest';
+      }
+    }
 
     user.company = company._id;
     await user.save();
 
+    notificationService.emit('user:updated', {
+      userId: user._id,
+      companyId: company._id,
+      updatedFields: ['company']
+    });
+
     res.status(200).json({
-      message: 'Freelance company created successfully',
+      message: 'Company created successfully',
       company: {
         _id: company._id,
         name: company.name,
