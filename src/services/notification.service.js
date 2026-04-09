@@ -4,22 +4,22 @@ import { EventEmitter } from 'node:events';
 const notificationService = new EventEmitter();
 
 // Log when a user registers.
-notificationService.on('userregistered', (user) => {
+notificationService.on('user:registered', (user) => {
   console.log(`User registered: ${user.email}`);
 });
 
 // Log when a user verifies their email.
-notificationService.on('userverified', (user) => {
+notificationService.on('user:verified', (user) => {
   console.log(`User verified: ${user.email}`);
 });
 
 // Log when a user is invited.
-notificationService.on('userinvited', (user) => {
+notificationService.on('user:invited', (user) => {
   console.log(`User invited: ${user.email}`);
 });
 
 // Log when a user is deleted.
-notificationService.on('userdeleted', (user) => {
+notificationService.on('user:deleted', (user) => {
   console.log(`User deleted: ${user.email}`);
 });
 
