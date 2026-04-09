@@ -93,5 +93,10 @@ bildyapp-api/
 }
 ```
 
+## API Testing
+
+- Can be executed with `curl` using the snippets from `requests.sh`.
+- **REST Client** using `requests.http` such as Thunder Client or VS Code Rest Client.
+
 ---
 UTAD Web Programming II Server assignment | Node.js + Express 5 + MongoDB
