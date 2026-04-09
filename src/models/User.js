@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -73,5 +74,13 @@ const userSchema = new mongoose.Schema({
 userSchema.virtual('fullName').get(function() {
   return `${this.name || ''} ${this.lastName || ''}`.trim();
 });
+
+// Hash password on save.
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+})
 
 export default mongoose.model('User', userSchema);
