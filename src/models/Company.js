@@ -11,6 +11,14 @@ const companySchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  // Prevent duplicates, create new document if none exist beforehand.
+  cif: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    index: true
   }
 }, { timestamps: true });
 
