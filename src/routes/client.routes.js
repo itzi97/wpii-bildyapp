@@ -1,6 +1,6 @@
 // src/routes/client.routes.js
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.js';
 import { createClientSchema, updateClientSchema } from '../validators/client.validator.js';
 import {
@@ -16,7 +16,7 @@ import {
 const router = Router();
 
 // All clients routes require JWT
-router.use(authenticate);
+router.use(authenticateToken);
 
 router.get('/archived', listArchivedClients);
 router.get('/', listClients);

@@ -58,6 +58,33 @@ export const updateClient = async (req, res, next) => {
   }
 };
 
+// GET /api/client
+export const listClients = async (req, res, next) => {
+  try {
+    const { company } = req.user;
+    const { page = 1, limit = 10, name, sort = '-createdAt' } = req.query;
+
+    const filter = { company, deleted: false };
+    if (name) filter.name = { $regex: name, $options: 'i' };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [clients, totalItems] = await Promise.all([
+      Client.find(filter).sort(sort).skip(skip).limit(Number(limit)),
+      Client.countDocuments(filter),
+    ]);
+
+    res.json({
+      ok: true,
+      clients,
+      currentPage: Number(page),
+      totalPages: Math.ceil(totalItems / Number(limit)),
+      totalItems,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/client/:id
 export const getClient = async (req, res, next) => {
   try {
