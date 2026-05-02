@@ -5,7 +5,8 @@ import AppError from '../utils/AppError.js';
 // POST /api/client
 export const createClient = async (req, res, next) => {
   try {
-    const { id: userId, company } = req.user;
+    const { id: userId } = req.user;
+    const company = req.user.company._id;
 
     const existing = await Client.findOne({
       company,
@@ -32,7 +33,7 @@ export const updateClient = async (req, res, next) => {
   try {
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
 
@@ -41,7 +42,7 @@ export const updateClient = async (req, res, next) => {
     // If CIF is changing, check it isn't already taken
     if (req.body.cif && req.body.cif.toUpperCase() !== client.cif) {
       const duplicate = await Client.findOne({
-        company: req.user.company,
+        company: req.user.company._id,
         cif: req.body.cif.toUpperCase()
       });
 
@@ -61,7 +62,7 @@ export const updateClient = async (req, res, next) => {
 // GET /api/client
 export const listClients = async (req, res, next) => {
   try {
-    const { company } = req.user;
+    const company = req.user.company._id;
     const { page = 1, limit = 10, name, sort = '-createdAt' } = req.query;
 
     const filter = { company, deleted: false };
@@ -90,7 +91,7 @@ export const getClient = async (req, res, next) => {
   try {
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
 
@@ -107,7 +108,7 @@ export const deleteClient = async (req, res, next) => {
   try {
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
 
@@ -131,7 +132,7 @@ export const deleteClient = async (req, res, next) => {
 export const listArchivedClients = async (req, res, next) => {
   try {
     const clients = await Client.find({
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: true
     }).sort('-createdAt');
 
@@ -146,7 +147,7 @@ export const restoreClient = async (req, res, next) => {
   try {
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: true
     });
 
