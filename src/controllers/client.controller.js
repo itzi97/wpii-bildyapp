@@ -7,11 +7,10 @@ export const createClient = async (req, res, next) => {
   try {
     const { id: userId, company } = req.user;
 
-    const existing = await Client.findOne(
-      {
-        company,
-        cif: req.body.cif.toUpperCase()
-      }
+    const existing = await Client.findOne({
+      company,
+      cif: req.body.cif.toUpperCase()
+    }
     );
 
     if (existing)
@@ -27,3 +26,35 @@ export const createClient = async (req, res, next) => {
     next(err);
   }
 };
+
+// PUT /api/client/:id
+export const updateClient = async (req, res, next) => {
+  try {
+    const client = await Client.findOne({
+      _id: req.params.id,
+      company: req.user.company,
+      deleted: false
+    });
+
+    if (!client) return next(AppError.notFound('Client not found'));
+
+    // If CIF is changing, check it isn't already taken
+    if (req.body.cif && req.body.cif.toUpperCase() !== client.cif) {
+      const duplicate = await Client.findOne({
+        company: req.user.company,
+        cif: req.body.cif.toUpperCase()
+      });
+
+      if (duplicate)
+        return next(AppError.conflict('A client with this CIF already exists in your company'));
+    }
+
+    Object.assign(client, req.body);
+    await client.save();
+
+    res.json({ ok: true, client });
+  } catch (err) {
+    next(err);
+  }
+};
+
