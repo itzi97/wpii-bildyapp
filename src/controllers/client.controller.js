@@ -58,3 +58,79 @@ export const updateClient = async (req, res, next) => {
   }
 };
 
+// GET /api/client/:id
+export const getClient = async (req, res, next) => {
+  try {
+    const client = await Client.findOne({
+      _id: req.params.id,
+      company: req.user.company,
+      deleted: false
+    });
+
+    if (!client)
+      return next(AppError.notFound('Client not found'));
+    res.json({ ok: true, client });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// DELETE /api/client/:id (?soft=true for soft delete)
+export const deleteClient = async (req, res, next) => {
+  try {
+    const client = await Client.findOne({
+      _id: req.params.id,
+      company: req.user.company,
+      deleted: false
+    });
+
+    if (!client)
+      return next(AppError.notFound('Client not found'));
+
+    if (req.query.soft === 'true') {
+      client.deleted = true;
+      await client.save();
+      return res.json({ ok: true, message: 'Client archived' });
+    }
+
+    await client.deleteOne();
+    res.json({ ok: true, message: 'Client deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/client/archived
+export const listArchivedClients = async (req, res, next) => {
+  try {
+    const clients = await Client.find({
+      company: req.user.company,
+      deleted: true
+    }).sort('-createdAt');
+
+    res.json({ ok: true, clients });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /api/client/:id/restore
+export const restoreClient = async (req, res, next) => {
+  try {
+    const client = await Client.findOne({
+      _id: req.params.id,
+      company: req.user.company,
+      deleted: true
+    });
+
+    if (!client)
+      return next(AppError.notFound('Archived client not found'));
+
+    client.deleted = false;
+    await client.save();
+
+    res.json({ ok: true, client });
+  } catch (err) {
+    next(err);
+  }
+}
