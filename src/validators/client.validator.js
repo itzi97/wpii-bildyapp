@@ -1,5 +1,4 @@
 // src/validators/client.validator.js
-
 import { z } from 'zod';
 
 const addressSchema = z.object({
@@ -10,7 +9,7 @@ const addressSchema = z.object({
   province: z.string().trim().optional(),
 }).optional();
 
-export const createClientSchema = z.object({
+export const clientBodySchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   cif: z.string().trim().min(1, 'CIF is required').toUpperCase(),
   email: z.string().trim().email('Invalid email').toLowerCase().optional(),
@@ -18,4 +17,10 @@ export const createClientSchema = z.object({
   address: addressSchema,
 });
 
-export const updateClientSchema = createClientSchema.partial();
+export const createClientSchema = z.object({
+  body: clientBodySchema,
+});
+
+export const updateClientSchema = z.object({
+  body: clientBodySchema.partial(),
+});

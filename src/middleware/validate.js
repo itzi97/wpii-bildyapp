@@ -1,3 +1,4 @@
+// src/middleware/validate.js
 import { ZodError } from 'zod';
 
 // Generic Zod validation middleware
