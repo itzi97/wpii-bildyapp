@@ -132,4 +132,60 @@ export const getProject = async (req, res, next) => {
   }
 };
 
+// DELETE /api/project/:id
+export const deleteProject = async (req, res, next) => {
+  try {
+    const project = await Project.findOne({
+      _id: req.params.id,
+      company: req.user.company._id,
+      deleted: false
+    });
 
+    if (!project) return next(AppError.notFound('Project not found'));
+
+    if (req.query.soft === 'true') {
+      project.deleted = true;
+      await project.save();
+      return res.json({ ok: true, message: 'Project archived' });
+    }
+
+    await project.deleteOne();
+    res.json({ ok: true, message: 'Project deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/project/archived
+export const listArchivedProjects = async (req, res, next) => {
+  try {
+    const projects = await Project.find({
+      company: req.user.company._id,
+      deleted: true
+    }).populate('client', 'name cif').sort('-createdAt');
+
+    res.json({ ok: true, projects });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /api/project/:id/restore
+export const restoreProject = async (req, res, next) => {
+  try {
+    const project = await Project.findOne({
+      _id: req.params.id,
+      company: req.user.company._id,
+      deleted: true
+    });
+
+    if (!project) return next(AppError.notFound('Archived project not found'));
+
+    project.deleted = false;
+    await project.save();
+
+    res.json({ ok: true, project });
+  } catch (err) {
+    next(err);
+  }
+};
