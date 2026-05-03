@@ -1,4 +1,4 @@
-// 
+// src/controllers/deliverynote.controller.js 
 import DeliveryNote from '../models/DeliveryNote.js';
 import Client from '../models/Client.js';
 import Project from '../models/Project.js';
@@ -12,13 +12,14 @@ export const createDeliveryNote = async (req, res, next) => {
     if (!parsed.success)
       return res.status(400).json({ error: parsed.error.flatten() });
 
-    const { clientId, projectId, ...rest } = parsed.data;
+    const { clientId, projectId, workdate, ...rest } = parsed.data;
     const note = await DeliveryNote.create({
       ...rest,
+      workDate: workdate,
       client: clientId,
       project: projectId,
-      company: req.user.company,
-      createdBy: req.user._id,
+      company: req.user.company._id,
+      user: req.user._id,
     });
     res.status(201).json(note);
   } catch (err) { next(err); }
@@ -27,9 +28,9 @@ export const createDeliveryNote = async (req, res, next) => {
 export const getDeliveryNotes = async (req, res, next) => {
   try {
     const notes = await DeliveryNote.find({
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
-    }).populate('client project createdBy', 'name email');
+    }).populate('client project user', 'name email');
     res.json(notes);
   } catch (err) { next(err); }
 };
@@ -38,7 +39,7 @@ export const getDeliveryNote = async (req, res, next) => {
   try {
     const note = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
     if (!note) return res.status(404).json({ error: 'Not found' });
@@ -50,15 +51,16 @@ export const signDeliveryNote = async (req, res, next) => {
   try {
     const note = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
     if (!note) return res.status(404).json({ error: 'Not found' });
     if (note.signed) return res.status(409).json({ error: 'Already signed' });
-    const { signatureUrl } = req.body;
-    if (!signatureUrl) return res.status(400).json({ error: 'signatureUrl required' });
+    const { signatureData } = req.body;
+    if (!signatureData) return res.status(400).json({ error: 'signatureData required' });
     note.signed = true;
-    note.signatureUrl = signatureUrl;
+    note.signatureData = signatureData;
+    note.signedAt = new Date();
     await note.save();
     res.json(note);
   } catch (err) { next(err); }
@@ -68,7 +70,7 @@ export const getDeliveryNotePDF = async (req, res, next) => {
   try {
     const note = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
     if (!note) return res.status(404).json({ error: 'Not found' });
@@ -95,7 +97,7 @@ export const deleteDeliveryNote = async (req, res, next) => {
   try {
     const note = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company,
+      company: req.user.company._id,
       deleted: false
     });
     if (!note) return res.status(404).json({ error: 'Not found' });

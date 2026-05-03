@@ -60,19 +60,6 @@ deliveryNoteSchema.index({ company: 1, client: 1 });
 deliveryNoteSchema.index({ company: 1, signed: 1 });
 deliveryNoteSchema.index({ workDate: -1 });
 
-// Guard: signed notes cannot be modified or deleted
-deliveryNoteSchema.pre('save', function(next) {
-  if (!this.isNew && this.signed && this.isModified()) {
-    const allowedFields = ['pdfPath', 'signedAt', 'signatureData'];
-    const modifiedPaths = this.modifiedPaths();
-    const hasDisallowedChange = modifiedPaths.some(p => !allowedFields.includes(p));
-    if (hasDisallowedChange) {
-      return next(new Error('A signed delivery note cannot be modified'));
-    }
-  }
-  next();
-});
-
 const DeliveryNote = mongoose.model('DeliveryNote', deliveryNoteSchema);
 
 export default DeliveryNote;

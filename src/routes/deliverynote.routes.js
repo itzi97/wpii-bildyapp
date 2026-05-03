@@ -17,7 +17,7 @@ router.post('/', createDeliveryNote);
 router.get('/', getDeliveryNotes);
 router.get('/pdf/:id', getDeliveryNotePDF);
 router.get('/:id', getDeliveryNote);
-router.put('/sign/:id', signDeliveryNote);
+router.patch('/:id/sign', signDeliveryNote);
 router.delete('/:id', deleteDeliveryNote);
 
 export default router;
