@@ -8,7 +8,8 @@ import errorHandler from './middleware/error-handler.js';
 import sanitize from './middleware/sanitize.js';
 import userRoutes from './routes/user.routes.js';
 import clientRouter from './routes/client.routes.js';
-import rojectRouter from './routes/project.routes.js';
+import projectRouter from './routes/project.routes.js';
+import deliveryNoteRoutes from './routes/deliverynote.routes.js'
 
 const app = express();
 
@@ -31,10 +32,9 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/user', userRoutes);
-
 app.use('/api/client', clientRouter);
-
 app.use('/api/project', projectRouter);
+app.use('/api/deliverynote', deliveryNoteRoutes)
 
 // Custom error handler, registered after all routes.
 app.use(errorHandler);
