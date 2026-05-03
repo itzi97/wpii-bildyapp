@@ -11,6 +11,12 @@ import clientRouter from './routes/client.routes.js';
 import projectRouter from './routes/project.routes.js';
 import deliveryNoteRoutes from './routes/deliverynote.routes.js'
 
+import {
+  swaggerSpec,
+  swaggerServe,
+  swaggerSetup
+} from './config/swagger.js';
+
 const app = express();
 
 // Security middleware
@@ -35,6 +41,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/client', clientRouter);
 app.use('/api/project', projectRouter);
 app.use('/api/deliverynote', deliveryNoteRoutes)
+
+app.use('/api-docs', swaggerServe, swaggerSetup);
 
 // Custom error handler, registered after all routes.
 app.use(errorHandler);
