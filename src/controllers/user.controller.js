@@ -1,3 +1,4 @@
+// src/controllers/user.controller.js
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
@@ -211,6 +212,16 @@ export const updateCompany = async (req, res, next) => {
     }
 
     const { name, cif, address, isFreelance } = req.body;
+
+    // Handle freelance case
+    if (isFreelance) {
+      user.isFreelance = true;
+      await user.save();
+      return res.status(200).json({
+        message: 'Freelance profile updated',
+        isFreelance: true
+      });
+    }
 
     let company = await Company.findOne({ cif });
 

@@ -1,6 +1,23 @@
-node_modules
-.env
-.env.local
-uploads/*
 !.gitkeep
+
+# node modules
+node_modules
+
+# env files
+.env
+.env.*
+!.env.example
+
+# test artifacts
+test-logo.png
+test.pdf
+refresh_token.txt
+
+# uploads
+uploads/
+
+# coverage
+coverage/
+
+# logs
 *.log
