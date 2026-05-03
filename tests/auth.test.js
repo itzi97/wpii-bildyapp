@@ -2,6 +2,7 @@
 import request from 'supertest';
 import app from '../src/app.js';
 import { connectDB, closeDB, clearDB } from './setup.js';
+import User from '../src/models/User.js';
 
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
@@ -36,6 +37,7 @@ describe('POST /api/user/register', () => {
 describe('POST /api/user/login', () => {
   beforeEach(async () => {
     await request(app).post('/api/user/register').send(baseUser);
+    await User.findOneAndUpdate({ email: baseUser.email }, { status: 'verified' });
   });
 
   it('logs in with valid credentials', async () => {
@@ -69,7 +71,7 @@ describe('GET /api/user', () => {
       `Bearer ${reg.body.accessToken}`
     );
     expect(res.status).toBe(200);
-    expect(res.body.email).toBe(baseUser.email);
+    expect(res.body.user.email).toBe(baseUser.email);
   });
 
   it('returns 401 without token', async () => {
@@ -84,7 +86,7 @@ describe('PUT /api/user/register (onboarding)', () => {
     const res = await request(app)
       .put('/api/user/register')
       .set('Authorization', `Bearer ${reg.body.accessToken}`)
-      .send({ fullName: 'Test User', phone: '676769676' });
+      .send({ name: 'Test', lastname: 'User', nif: '12345678A' });
     expect(res.status).toBe(200);
   });
 });
@@ -94,7 +96,7 @@ describe('PATCH /api/user/company', () => {
     const reg = await request(app).post('/api/user/register').send(baseUser);
     const res = await request(app)
       .patch('/api/user/company')
-      .set('Authorization', `Bearer ${reg.body.token}`)
+      .set('Authorization', `Bearer ${reg.body.accessToken}`)
       .send({ name: 'TestCo', cif: 'B12345678', isFreelance: false });
     expect(res.status).toBe(200);
   });
