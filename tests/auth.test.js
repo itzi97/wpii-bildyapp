@@ -86,7 +86,7 @@ describe('PUT /api/user/register (onboarding)', () => {
     const res = await request(app)
       .put('/api/user/register')
       .set('Authorization', `Bearer ${reg.body.accessToken}`)
-      .send({ name: 'Test', lastname: 'User', nif: '12345678A' });
+      .send({ name: 'Test', lastName: 'User', nif: '12345678A' });
     expect(res.status).toBe(200);
   });
 });
@@ -97,7 +97,7 @@ describe('PATCH /api/user/company', () => {
     const res = await request(app)
       .patch('/api/user/company')
       .set('Authorization', `Bearer ${reg.body.accessToken}`)
-      .send({ name: 'TestCo', cif: 'B12345678', isFreelance: false });
+      .send({ isFreelance: true });
     expect(res.status).toBe(200);
   });
 });
