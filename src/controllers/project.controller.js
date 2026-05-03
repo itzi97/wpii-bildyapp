@@ -85,3 +85,51 @@ export const updateProject = async (req, res, next) => {
   }
 };
 
+// GET /api/project
+export const listProjects = async (req, res, next) => {
+  try {
+    const company = req.user.company._id;
+    const { page = 1, limit = 10, client, name, active, sort = '-createdAt' } = req.query;
+
+    const filter = { company, deleted: false };
+    if (client) filter.client = client;
+    if (name) filter.name = { $regex: name, $options: 'i' };
+    if (active !== undefined) filter.active = active === 'true';
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [projects, totalItems] = await Promise.all([
+      Project.find(filter).populate('client', 'name cif').sort(sort).skip(skip).limit(Number(limit)),
+      Project.countDocuments(filter),
+    ]);
+
+    res.json({
+      ok: true,
+      projects,
+      currentPage: Number(page),
+      totalPages: Math.ceil((totalItems) / Number(limit)),
+      totalItems,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/project/:id
+export const getProject = async (req, res, next) => {
+  try {
+    const project = await Project.findOne({
+      _id: req.params.id,
+      company: req.user.company._id,
+      deleted: false
+    }).populate('client', 'name cif email');
+
+    if (!project)
+      return next(AppError.notFound('Project not found'));
+
+    res.json({ ok: true, project });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
