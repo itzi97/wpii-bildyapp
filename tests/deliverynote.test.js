@@ -295,3 +295,52 @@ it('returns 404 for non-existent delivery note', async () => {
     .set('Authorization', `Bearer ${token}`);
   expect(res.status).toBe(404);
 });
+
+it('returns 404 when signing a non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .patch('/api/deliverynote/000000000000000000000000/sign')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ signatureData: SIGNATURE_DATA });
+  expect(res.status).toBe(404);
+});
+
+it('returns 400 when signing without signatureData', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'x', workdate: new Date().toISOString(), hours: 1 });
+
+  const res = await request(app)
+    .patch(`/api/deliverynote/${created.body._id}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({});
+  expect(res.status).toBe(400);
+});
+
+it('returns 404 when fetching PDF for non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .get('/api/deliverynote/pdf/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
+
+it('returns 404 when deleting a non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .delete('/api/deliverynote/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
+
+it('returns 400 when creating a note with invalid body', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ format: 'invalid-format' }); // missing required fields
+  expect(res.status).toBe(400);
+});
