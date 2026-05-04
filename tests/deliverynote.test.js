@@ -205,7 +205,6 @@ it('does not allow signing a delivery note twice', async () => {
   expect(res.body.error).toBe('Already signed');
 });
 
-// DELETE /api/deliverynote/:id: succeeds when unsigned
 // DELETE /api/deliverynote/:id: returns 403 when signed
 it('does not allow deleting a signed delivery note', async () => {
   const { token, clientId, projectId } = await setup();
@@ -237,4 +236,54 @@ it('does not allow deleting a signed delivery note', async () => {
   expect(res.body.error).toBe('Cannot delete a signed delivery note');
 });
 
-// GET /api/deliverynote/pdf/:id returns application/pdf and 200
+// DELETE /api/deliverynote/:id: succeeds when unsigned
+it('deletes an unsigned delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Unsigned delete test',
+      workdate: new Date().toISOString(),
+      hours: 2,
+    });
+
+  const noteId = created.body._id;
+
+  const res = await request(app)
+    .delete(`/api/deliverynote/${noteId}`)
+    .set('Authorization', `Bearer ${token}`)
+
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('message');
+});
+
+// GET /api/deliverynote/pdf/:id: returns application/pdf and 200
+it('downloads delivery note PDF', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'PDF test',
+      workdate: new Date().toISOString(),
+      hours: 8
+    });
+
+  const noteId = created.body._id;
+
+  const res = await request(app)
+    .get(`/api/deliverynote/pdf/${noteId}`)
+    .set('Authorization', `Bearer ${token}`)
+
+  expect(res.status).toBe(200);
+  expect(res.headers['content-type']).toBe('application/pdf');
+});
