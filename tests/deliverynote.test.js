@@ -206,5 +206,35 @@ it('does not allow signing a delivery note twice', async () => {
 });
 
 // DELETE /api/deliverynote/:id: succeeds when unsigned
-// DELETE /api/deliverynote/:id returns 403 whne signed
+// DELETE /api/deliverynote/:id: returns 403 when signed
+it('does not allow deleting a signed delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Signed deleted protection test',
+      workdate: new Date().toISOString(),
+      hours: 3,
+    });
+
+  const noteId = created.body._id;
+
+  await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ signatureData: SIGNATURE_DATA });
+
+  const res = await request(app)
+    .delete(`/api/deliverynote/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(403);
+  expect(res.body.error).toBe('Cannot delete a signed delivery note');
+});
+
 // GET /api/deliverynote/pdf/:id returns application/pdf and 200
