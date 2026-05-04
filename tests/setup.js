@@ -2,6 +2,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 
+// database helpers for testing
 let mongod;
 
 export const connectDB = async () => {

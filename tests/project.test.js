@@ -256,4 +256,37 @@ describe('Project endpoints', () => {
       .send({ name: 'Ghost' });
     expect(res.status).toBe(404);
   });
+
+  it('returns 404 when updating project with a foreign client', async () => {
+    const { token, clientId } = await setup();
+
+    const created = await request(app)
+      .post('/api/project')
+      .set('Authorization', `Bearer ${token}`)
+      .send(projectPayload(clientId));
+
+    const res = await request(app)
+      .put(`/api/project/${created.body.project._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ client: '676767676767676767676767' });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when deleting a non-existent project', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .delete('/api/project/676767676767676767676767')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when restoring a non-existent archived project', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .patch('/api/project/676767676767676767676767/restore')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
 });
+
