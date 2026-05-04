@@ -131,7 +131,7 @@ it('gets a delivery note by id', async () => {
   const noteId = created.body._id;
 
   const res = await request(app)
-    .get(`/api/deliverynotes/${noteId}`)
+    .get(`/api/deliverynote/${noteId}`)
     .set('Authorization', `Bearer ${token}`);
 
   expect(res.status).toBe(200);
@@ -141,6 +141,37 @@ it('gets a delivery note by id', async () => {
 });
 
 // PATCH /api/deliverynote/:id/sign signs it, signing it twice returns 409
+it('signs a delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Signing test',
+      workdate: new Date().toISOString(),
+      hours: 4
+    });
+
+  const noteId = created.body._id;
+
+  const res = await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      signatureData: 'data:image/png;base64,ZmFrZVNpZ25hdHVyZQ=='
+    });
+
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('_id', noteId);
+  expect(res.body.signed).toBe(true);
+  expect(res.body.signatureData).toBe('data:image/png;base64,ZmFrZVNpZ25hdHVyZQ==');
+  expect(res.body.signedAt).toBeTruthy();
+});
+
 // DELETE /api/deliverynote/:id: succeeds when unsigned
 // DELETE /api/deliverynote/:id returns 403 whne signed
 // GET /api/deliverynote/pdf/:id returns application/pdf and 200
