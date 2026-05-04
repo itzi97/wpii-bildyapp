@@ -1,10 +1,13 @@
 // src/controllers/deliverynote.controller.js 
 import DeliveryNote from '../models/DeliveryNote.js';
+import AppError from '../utils/AppError.js';
 import Client from '../models/Client.js';
 import Project from '../models/Project.js';
 import Company from '../models/Company.js';
 import { generateDeliveryNotePDF } from '../services/pdf.service.js';
 import { createDeliveryNoteSchema } from '../validators/deliverynote.validator.js';
+import { uploadSignatureBuffer, uploadPdfBuffer } from '../services/storage.service.js';
+import { generateDeliveryNotePdfBuffer } from '../services/pdf.service.js';
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
@@ -49,21 +52,55 @@ export const getDeliveryNote = async (req, res, next) => {
 
 export const signDeliveryNote = async (req, res, next) => {
   try {
-    const note = await DeliveryNote.findOne({
+    const deliveryNote = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: req.user.company,
       deleted: false
+    })
+      .populate('user')
+      .populate('client')
+      .populate('project');
+
+    if (!deliveryNote) {
+      return next(AppError.notFound('Delivery note not found'));
+    }
+
+    if (deliveryNote.signed) {
+      return next(AppError.badRequest('Delivery note is already signed'));
+    }
+
+    if (!req.file) {
+      return next(AppError.badRequest('Signature file is required'));
+    }
+
+    const signatureUpload = await uploadSignatureBuffer(
+      req.file.buffer,
+      req.file.originalname?.split('.')[0] || 'signature'
+    );
+
+    deliveryNote.signatureUrl = signatureUpload.secure_url;
+    deliveryNote.signed = true;
+    deliveryNote.signedAt = new Date();
+
+    const pdfBuffer = await generateDeliveryNotePdfBuffer(deliveryNote);
+
+    const pdfUpload = await uploadPdfBuffer(
+      pdfBuffer,
+      `delivery-note-${deliveryNote._id}`
+    );
+
+    deliveryNote.pdfUrl = pdfUpload.secure_url;
+
+    await deliveryNote.save();
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Delivery note signed successfully',
+      data: deliveryNote
     });
-    if (!note) return res.status(404).json({ error: 'Not found' });
-    if (note.signed) return res.status(409).json({ error: 'Already signed' });
-    const { signatureData } = req.body;
-    if (!signatureData) return res.status(400).json({ error: 'signatureData required' });
-    note.signed = true;
-    note.signatureData = signatureData;
-    note.signedAt = new Date();
-    await note.save();
-    res.json(note);
-  } catch (err) { next(err); }
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const getDeliveryNotePDF = async (req, res, next) => {
@@ -102,7 +139,7 @@ export const deleteDeliveryNote = async (req, res, next) => {
     });
     if (!note) return res.status(404).json({ error: 'Not found' });
     if (note.signed)
-      return res.status(403).json({ error: 'Cannot delete a signed delivery note' });
+      return next(AppError.badRequest('Signed delivery notes cannot be modified or deleted'));
     note.deleted = true;
     await note.save();
     res.json({ message: 'Deleted' });
