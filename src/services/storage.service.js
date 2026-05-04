@@ -23,3 +23,23 @@ function uploadBuffer(buffer, { folder, resource_type = 'auto', public_id } = {}
     Readable.from(buffer).pipe(stream);
   });
 }
+
+export async function uploadSignatureBuffer(buffer, filename = 'signature') {
+  if (!buffer) throw AppError.badRequest('Signature file is required');
+
+  return uploadBuffer(buffer, {
+    folder: 'bildyapp/signatures',
+    resource_type: 'image',
+    public_id: `${Date.now()}-${filename}`
+  });
+}
+
+export async function uploadPdfBuffer(buffer, filename = 'delivery-note') {
+  if (!buffer) throw AppError.badRequest('PDF buffer is required');
+
+  return uploadBuffer(buffer, {
+    folder: 'bildyapp/pdfs',
+    resource_type: 'raw',
+    public_id: `${Date.now()}-${filename}.pdf`
+  });
+}
