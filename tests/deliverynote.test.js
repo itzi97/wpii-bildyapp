@@ -7,10 +7,13 @@ beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
 
+// Globals for tests
 const baseUser = {
   email: 'test@bildyapp.com',
   password: 'Password123!',
 };
+
+const SIGNATURE_DATA = 'data:image/png;base64,ZmFrZVNpZ25hdHVyZQ==';
 
 // Setup helper
 const setup = async () => {
@@ -161,19 +164,47 @@ it('signs a delivery note', async () => {
   const res = await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
     .set('Authorization', `Bearer ${token}`)
-    .send({
-      signatureData: 'data:image/png;base64,ZmFrZVNpZ25hdHVyZQ=='
-    });
+    .send({ signatureData: SIGNATURE_DATA });
 
   expect(res.status).toBe(200);
   expect(res.body).toHaveProperty('_id', noteId);
   expect(res.body.signed).toBe(true);
-  expect(res.body.signatureData).toBe('data:image/png;base64,ZmFrZVNpZ25hdHVyZQ==');
+  expect(res.body.signatureData).toBe(SIGNATURE_DATA);
   expect(res.body.signedAt).toBeTruthy();
+});
+
+it('does not allow signing a delivery note twice', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Double sign test',
+      workdate: new Date().toISOString(),
+      hours: 5,
+    });
+
+  const noteId = created.body._id;
+
+  await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ signatureData: SIGNATURE_DATA });
+
+  const res = await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ signatureData: SIGNATURE_DATA });
+
+  // TODO
+  expect(res.status).toBe(409);
+  expect(res.body.error).toBe('Already signed');
 });
 
 // DELETE /api/deliverynote/:id: succeeds when unsigned
 // DELETE /api/deliverynote/:id returns 403 whne signed
 // GET /api/deliverynote/pdf/:id returns application/pdf and 200
-
-
