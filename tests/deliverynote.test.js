@@ -113,6 +113,33 @@ it('lists delivery notes', async () => {
 });
 
 // GET /api/deliverynote/:id: returns one note
+it('gets a delivery note by id', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Inspection work',
+      workdate: new Date().toISOString(),
+      hours: 6
+    });
+
+  const noteId = created.body._id;
+
+  const res = await request(app)
+    .get(`/api/deliverynotes/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('_id', noteId);
+  expect(res.body.format).toBe('hours');
+  expect(res.body.description).toBe('Inspection work');
+});
+
 // PATCH /api/deliverynote/:id/sign signs it, signing it twice returns 409
 // DELETE /api/deliverynote/:id: succeeds when unsigned
 // DELETE /api/deliverynote/:id returns 403 whne signed
