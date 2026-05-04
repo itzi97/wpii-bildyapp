@@ -88,6 +88,30 @@ it('creates a delivery note', async () => {
 });
 
 // GET /api/deliverynote: lists notes
+it('lists delivery notes', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'Test work',
+      workdate: new Date().toISOString(),
+      hours: 8,
+    });
+
+  const res = await request(app)
+    .get('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  expect(Array.isArray(res.body)).toBe(true);
+  expect(res.body.length).toBeGreaterThan(0);
+});
+
 // GET /api/deliverynote/:id: returns one note
 // PATCH /api/deliverynote/:id/sign signs it, signing it twice returns 409
 // DELETE /api/deliverynote/:id: succeeds when unsigned
