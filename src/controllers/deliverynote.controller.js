@@ -132,16 +132,27 @@ export const getDeliveryNotePDF = async (req, res, next) => {
 
 export const deleteDeliveryNote = async (req, res, next) => {
   try {
-    const note = await DeliveryNote.findOne({
+    const deliveryNote = await DeliveryNote.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: req.user.company,
       deleted: false
     });
-    if (!note) return res.status(404).json({ error: 'Not found' });
-    if (note.signed)
-      return next(AppError.badRequest('Signed delivery notes cannot be modified or deleted'));
-    note.deleted = true;
-    await note.save();
-    res.json({ message: 'Deleted' });
-  } catch (err) { next(err); }
+
+    if (!deliveryNote) {
+      return next(AppError.notFound('Delivery note not found'));
+    }
+
+    if (deliveryNote.signed) {
+      return next(AppError.badRequest('Signed delivery notes cannot be deleted'));
+    }
+
+    await deliveryNote.deleteOne();
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Delivery note deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
 };
