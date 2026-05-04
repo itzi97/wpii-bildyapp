@@ -287,3 +287,11 @@ it('downloads delivery note PDF', async () => {
   expect(res.status).toBe(200);
   expect(res.headers['content-type']).toBe('application/pdf');
 });
+
+it('returns 404 for non-existent delivery note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .get('/api/deliverynote/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
