@@ -112,3 +112,25 @@ describe('POST /api/user/logout', () => {
   });
 });
 
+
+// Auth middleware, protected routes
+describe('GET /api/client', () => {
+  it('returns 401 with no Authorization header', async () => {
+    const res = await request(app).get('/api/client');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 with a malformed/invalid JWT', async () => {
+    const res = await request(app)
+      .get('/api/client')
+      .set('Authorization', 'Bearer this.is.not.valid');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 401 with Bearer but no token value', async () => {
+    const res = await request(app)
+      .get('/api/client')
+      .set('Authorization', 'Bearer ');
+    expect(res.status).toBe(401);
+  });
+});
