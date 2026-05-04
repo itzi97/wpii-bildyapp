@@ -52,19 +52,6 @@ async function setup() {
   return { token };
 };
 
-describe('DEBUG: user register', () => {
-  it('register a user', async () => {
-    const res = await request(app).post('/api/user/register').send({
-      name: 'Test User',
-      email: 'test@bildyapp.com',
-      password: 'TestPassword123',
-    });
-
-    console.log('Register status:', res.status);
-    console.log('Register body:', JSON.stringify(res.body, null, 2));
-  });
-});
-
 describe('Client endpoints', () => {
 
   // GET /api/client
@@ -384,5 +371,66 @@ describe('Client endpoints', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
+  });
+
+  // Missing auth
+  it('rejects unauthenticated requests', async () => {
+    const res = await request(app).get('/api/client');
+    expect(res.status).toBe(401);
+  });
+
+  // Invalid JWT
+  it('rejects an invalid token', async () => {
+    const res = await request(app)
+      .get('/api/client')
+      .set('Authorization', 'Bearer tokeninvalido');
+    expect(res.status).toBe(401);
+  });
+
+  // Zod validation failure
+  it('rejects a client with missing required fields', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: 'only-email@test.com' }); // missing name, cif, address
+    expect(res.status).toBe(400);
+  });
+
+  // Pagination query params
+  it('paginates clients with ?page and ?limit', async () => {
+    const { token } = await setup();
+    // Create 2 clients
+    for (const cif of ['B11111111', 'B22222222']) {
+      await request(app)
+        .post('/api/client')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ name: 'C', cif, email: 'c@c.com', phone: '111', address: { street: 'S', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' } });
+    }
+    const res = await request(app)
+      .get('/api/client?page=1&limit=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.clients.length).toBe(1);
+    expect(res.body.totalPages).toBeGreaterThanOrEqual(2);
+    expect(res.body.currentPage).toBe(1);
+  });
+
+  // Name filter
+  it('filters clients by name', async () => {
+    const { token } = await setup();
+    await request(app).post('/api/client').set('Authorization', `Bearer ${token}`)
+      .send({ name: 'García SL', cif: 'B11111111', email: 'a@a.com', phone: '111', address: { street: 'S', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' } });
+    await request(app).post('/api/client').set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Smith Ltd', cif: 'B22222222', email: 'b@b.com', phone: '222', address: { street: 'S', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' } });
+
+    const res = await request(app)
+      .get('/api/client?name=García')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.clients.length).toBe(1);
+    expect(res.body.clients[0].name).toBe('García SL');
   });
 });
