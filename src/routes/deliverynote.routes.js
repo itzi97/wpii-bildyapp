@@ -1,7 +1,7 @@
 // src/routes/deliverynote.routes.js
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth.middleware.js'
-import upload from '../middleware/upload.js';
+import { authenticateToken } from '../middleware/auth.middleware.js';
+import { uploadMemory } from '../middleware/upload.js';
 import {
   createDeliveryNote,
   getDeliveryNotes,
@@ -49,7 +49,7 @@ router.use(authenticateToken);
  *       401:
  *         description: Unauthorized
  */
-router.post('/', createDeliveryNote);
+router.post('/', authenticateToken, createDeliveryNote);
 
 /**
  * @swagger
@@ -78,7 +78,7 @@ router.post('/', createDeliveryNote);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', getDeliveryNotes);
+router.get('/', authenticateToken, getDeliveryNotes);
 
 /**
  * @swagger
@@ -104,7 +104,7 @@ router.get('/', getDeliveryNotes);
  *       404:
  *         description: Not found
  */
-router.get('/pdf/:id', getDeliveryNotePDF);
+router.get('/pdf/:id', authenticateToken, getDeliveryNotePDF);
 
 /**
  * @swagger
@@ -129,7 +129,7 @@ router.get('/pdf/:id', getDeliveryNotePDF);
  *       404:
  *         description: Not found
  */
-router.get('/:id', getDeliveryNote);
+router.get('/:id', authenticateToken, getDeliveryNote);
 
 /**
  * @swagger
@@ -161,7 +161,7 @@ router.get('/:id', getDeliveryNote);
  *       404:
  *         description: Not found
  */
-router.patch('/:id/sign', authMiddleware, upload.single('signature'), signDeliveryNote);
+router.patch('/:id/sign', authenticateToken, uploadMemory.single('signature'), signDeliveryNote);
 
 /**
  * @swagger
@@ -184,6 +184,6 @@ router.patch('/:id/sign', authMiddleware, upload.single('signature'), signDelive
  *       404:
  *         description: Not found
  */
-router.delete('/:id', deleteDeliveryNote);
+router.delete('/:id', authenticateToken, deleteDeliveryNote);
 
 export default router;
