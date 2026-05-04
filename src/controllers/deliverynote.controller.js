@@ -4,10 +4,9 @@ import AppError from '../utils/AppError.js';
 import Client from '../models/Client.js';
 import Project from '../models/Project.js';
 import Company from '../models/Company.js';
-import { generateDeliveryNotePDF } from '../services/pdf.service.js';
+import { generateDeliveryNotePdfBuffer } from '../services/pdf.service.js';
 import { createDeliveryNoteSchema } from '../validators/deliverynote.validator.js';
 import { uploadSignatureBuffer, uploadPdfBuffer } from '../services/storage.service.js';
-import { generateDeliveryNotePdfBuffer } from '../services/pdf.service.js';
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
