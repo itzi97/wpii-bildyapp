@@ -36,13 +36,20 @@ const deliveryNoteSchema = new mongoose.Schema(
     hours: { type: Number, min: 0 },
     workers: [workerEntrySchema],
 
+
     // Signing
     signed: { type: Boolean, default: false },
-    signedAt: { type: Date },
-    signatureData: { type: String }, // Base64 image string
+    signedAt: { type: Date, default: null },
+    signatureUrl: {
+      type: String,
+      default: null
+    },
 
     // PDF
-    pdfPath: { type: String },
+    pdfUrl: {
+      type: String,
+      default: null
+    },
 
     deleted: { type: Boolean, default: false },
   },
