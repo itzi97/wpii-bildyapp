@@ -358,4 +358,31 @@ describe('Client endpoints', () => {
     expect(res.body.totalItems).toBe(1);
     expect(res.body.currentPage).toBe(1);
   });
+
+  // Hard deletes a client
+  it('hard deletes a client', async () => {
+    const { token } = await setup();
+    const created = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'To Delete',
+        cif: 'B99999999',
+        email: 'del@test.com',
+        phone: '123456789',
+        address: {
+          street: 'St',
+          number: '1',
+          postal: '28001',
+          city: 'Madrid',
+          province: 'Madrid',
+        },
+      });
+
+    const res = await request(app)
+      .delete(`/api/client/${created.body.client._id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+  });
 });

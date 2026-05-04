@@ -239,4 +239,21 @@ describe('Project endpoints', () => {
     expect(res.status).toBe(200);
     expect(res.body.project.deleted).toBe(false);
   });
+
+  it('returns 404 for non-existent project', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .get('/api/project/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when updating non-existent project', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .put('/api/project/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Ghost' });
+    expect(res.status).toBe(404);
+  });
 });

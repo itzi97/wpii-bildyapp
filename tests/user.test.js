@@ -177,4 +177,36 @@ describe('User endpoints', () => {
     expect(res.status).toBe(201);
     expect(res.body.ack).toBe(true);
   });
+
+  it('rejects login with wrong password', async () => {
+    const email = `test${Date.now()}@bildyapp.com`;
+    await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
+
+    // First verify the email
+    const User = (await import('../src/models/User.js')).default;
+    const user = await User.findOne({ email });
+    await request(app)
+      .put('/api/user/validation')
+      .set('Authorization', `Bearer ${(await request(app).post('/api/user/register').send({ email: `x${email}`, password: 'TestPassword123' })).body.accessToken}`)
+      .send({ code: user.verificationCode });
+
+    const res = await request(app)
+      .post('/api/user/login')
+      .send({ email, password: 'WrongPassword' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects refresh with invalid token', async () => {
+    const res = await request(app)
+      .post('/api/user/refresh')
+      .send({ refreshToken: 'invalidtoken' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects duplicate email on register', async () => {
+    const email = `test${Date.now()}@bildyapp.com`;
+    await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
+    const res = await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
+    expect(res.status).toBe(409);
+  });
 });
