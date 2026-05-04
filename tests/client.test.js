@@ -433,4 +433,41 @@ describe('Client endpoints', () => {
     expect(res.body.clients.length).toBe(1);
     expect(res.body.clients[0].name).toBe('García SL');
   });
+
+  // No updating client with duplicate CIF
+  it('rejects updating a client to a duplicate CIF', async () => {
+    const { token } = await setup();
+
+    await request(app).post('/api/client').set('Authorization', `Bearer ${token}`)
+      .send({ name: 'A', cif: 'B11111111', email: 'a@a.com', phone: '1', address: { street: 'S', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' } });
+
+    const second = await request(app).post('/api/client').set('Authorization', `Bearer ${token}`)
+      .send({ name: 'B', cif: 'B22222222', email: 'b@b.com', phone: '2', address: { street: 'S', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' } });
+
+    const res = await request(app)
+      .put(`/api/client/${second.body.client._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ cif: 'B11111111' }); // already taken by first client
+
+    expect(res.status).toBe(409);
+  });
+
+  // Delete non existing client
+  it('returns 404 when deleting a non-existent client', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .delete('/api/client/676767676767676767676767')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
+
+  // Restore non archived or non existent client
+  it('returns 404 when restoring a non-archived client', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .patch('/api/client/676767676767676767676767/restore')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
 });
+

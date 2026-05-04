@@ -210,3 +210,27 @@ describe('User endpoints', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('Role middleware — forbidden access', () => {
+  it('returns 403 when a non-admin user accesses an admin-only route', async () => {
+    const email = `norole${Date.now()}@test.com`;
+
+    const reg = await request(app)
+      .post('/api/user/register')
+      .send({ email, password: 'Password123!' });
+
+    const token = reg.body.accessToken;
+
+    // Downgrade role to 'user' so authorizeRoles('admin') rejects it
+    const User = (await import('../src/models/User.js')).default;
+    await User.findOneAndUpdate({ email }, { role: 'user' });
+
+    // authenticateToken re-fetches user from DB, so the updated role is used
+    const forbidden = await request(app)
+      .post('/api/user/invite')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: `invited${Date.now()}@test.com`, name: 'A', lastName: 'B' });
+
+    expect(forbidden.status).toBe(403);
+  });
+});
