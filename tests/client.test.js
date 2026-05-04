@@ -295,4 +295,67 @@ describe('Client endpoints', () => {
 
     expect(getRes.status).toBe(200);
   });
+
+  // Duplicate CIF rejected
+  it('rejects duplicate CIF in the same company', async () => {
+    const { token } = await setup();
+
+    const payload = {
+      name: 'Client One',
+      cif: 'B11111111',
+      email: 'client1@test.com',
+      phone: '123456789',
+      address: {
+        street: 'Client St',
+        number: '10',
+        postal: '28002',
+        city: 'Madrid',
+        province: 'Madrid'
+      },
+    };
+
+    await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload);
+
+    const res = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send(payload);
+
+    expect(res.status).toBe(409);
+  });
+
+  // List clients
+  it('lists clients', async () => {
+    const { token } = await setup();
+
+    await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Client One',
+        cif: 'B11111111',
+        email: 'client1@test.com',
+        phone: '123456789',
+        address: {
+          street: 'Client St',
+          number: '10',
+          postal: '28002',
+          city: 'Madrid',
+          province: 'Madrid',
+        },
+      });
+
+    const res = await request(app)
+      .get('/api/client')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.clients)).toBe(true);
+    expect(res.body.clients.length).toBe(1);
+    expect(res.body.totalItems).toBe(1);
+    expect(res.body.currentPage).toBe(1);
+  });
 });
