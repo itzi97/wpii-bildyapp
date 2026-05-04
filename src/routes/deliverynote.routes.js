@@ -1,7 +1,7 @@
 // src/routes/deliverynote.routes.js
-
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js'
+import upload from '../middleware/upload.js';
 import {
   createDeliveryNote,
   getDeliveryNotes,
@@ -161,7 +161,7 @@ router.get('/:id', getDeliveryNote);
  *       404:
  *         description: Not found
  */
-router.patch('/:id/sign', signDeliveryNote);
+router.patch('/:id/sign', authMiddleware, upload.single('signature'), signDeliveryNote);
 
 /**
  * @swagger
