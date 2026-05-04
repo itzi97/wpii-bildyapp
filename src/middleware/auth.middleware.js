@@ -19,7 +19,8 @@ export const authenticateToken = async (req, res, next) => {
 
   const token = parts[1]
 
-  console.log('Token preview:', token?.substring(0, 20) + '...');
+  // TODO: Remove test when feeling confident about it
+  //console.log('Token preview:', token?.substring(0, 20) + '...');
 
   try {
     // Verify token and decode payload.
