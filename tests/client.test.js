@@ -182,4 +182,117 @@ describe('Client endpoints', () => {
 
     expect(created.status).toBe(404);
   });
+
+  // DELETE /api/client/:id?soft=true
+  it('soft deletes a client', async () => {
+    const { token } = await setup();
+
+    const created = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Client One',
+        cif: 'B11111111',
+        email: 'client1@test.com',
+        phone: '123456789',
+        address: {
+          street: 'Client St',
+          number: '10',
+          postal: '28002',
+          city: 'Madrid',
+          province: 'Madrid'
+        },
+      });
+
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .delete(`/api/client/${created.body.client._id}?soft=true`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+
+    // Client should no longer appear in the active list
+    const getRes = await request(app)
+      .get(`/api/client/${created.body.client._id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(getRes.status).toBe(404);
+  });
+
+  // List archived clients 
+  it('lists archived clients', async () => {
+    const { token } = await setup();
+
+    const created = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Client One',
+        cif: 'B11111111',
+        email: 'client1@test.com',
+        phone: '123456789',
+        address: {
+          street: 'Client St',
+          number: '10',
+          postal: '28002',
+          city: 'Madrid',
+          province: 'Madrid'
+        },
+      });
+
+    await request(app)
+      .delete(`/api/client/${created.body.client._id}?soft=true`)
+      .set('Authorization', `Bearer ${token}`)
+
+    const res = await request(app)
+      .get('/api/client/archived')
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.clients)).toBe(true);
+    expect(res.body.clients.length).toBeGreaterThan(0);
+    expect(res.body.clients[0]._id).toBe(created.body.client._id);
+  });
+
+  // Restores archived client
+  it('restores an archived client', async () => {
+    const { token } = await setup();
+
+    const created = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Client One',
+        cif: 'B11111111',
+        email: 'client1@test.com',
+        phone: '123456789',
+        address: {
+          street: 'Client St',
+          number: '10',
+          postal: '28002',
+          city: 'Madrid',
+          province: 'Madrid',
+        },
+      });
+
+    await request(app)
+      .delete(`/api/client/${created.body.client._id}?soft=true`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const res = await request(app)
+      .patch(`/api/client/${created.body.client._id}/restore`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.client.deleted).toBe(false);
+
+    // Should be visible again in normal GET
+    const getRes = await request(app)
+      .get(`/api/client/${created.body.client._id}`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(getRes.status).toBe(200);
+  });
 });
