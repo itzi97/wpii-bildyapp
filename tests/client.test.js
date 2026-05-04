@@ -137,4 +137,49 @@ describe('Client endpoints', () => {
 
     expect(res.status).toBe(404);
   });
+
+  // PUT /api/client/:id
+  it('update a client', async () => {
+    const { token } = await setup();
+
+    const created = await request(app)
+      .post('/api/client')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'Client One',
+        cif: 'B11111111',
+        email: 'client1@test.com',
+        phone: '123456789',
+        address: {
+          street: 'Client St',
+          number: '10',
+          postal: '28002',
+          city: 'Madrid',
+          province: 'Madrid'
+        },
+      });
+
+    expect(created.status).toBe(201);
+
+    const res = await request(app)
+      .put(`/api/client/${created.body.client._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Client Updated' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.client.name).toBe('Client Updated');
+    expect(res.body.client.cif).toBe('B11111111');
+  });
+
+  // PUT /api/client/:id updating a non existent client returns 404
+  it('returns 404 when updating a non-existent client', async () => {
+    const { token } = await setup();
+
+    const created = await request(app)
+      .post('/api/client/676767676767676767676767')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Ghost' });
+
+    expect(created.status).toBe(404);
+  });
 });
