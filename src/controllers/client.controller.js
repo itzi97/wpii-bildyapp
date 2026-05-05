@@ -5,7 +5,8 @@ import AppError from '../utils/AppError.js';
 // POST /api/client
 export const createClient = async (req, res, next) => {
   try {
-    const { id: userId } = req.user;
+    // Mongoose default just in case
+    const userId = req.user._id || req.user.id;
     const company = req.user.company?._id || req.user.company;
 
     const existing = await Client.findOne({
@@ -43,7 +44,7 @@ export const updateClient = async (req, res, next) => {
     // If CIF is changing, check it isn't already taken
     if (req.body.cif && req.body.cif.toUpperCase() !== client.cif) {
       const duplicate = await Client.findOne({
-        company: company
+        company: company,
         cif: req.body.cif.toUpperCase()
       });
 
