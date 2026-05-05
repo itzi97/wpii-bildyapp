@@ -1,7 +1,7 @@
 // tests/deliverynote.test.js
 import request from 'supertest';
 import app from '../src/app.js';
-import { connectDB, closeDB, clearDB } from './setup.js';
+import { connectDB, closeDB, clearDB } from './helpers.js';
 
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
@@ -81,9 +81,11 @@ it('creates a delivery note', async () => {
       projectId,
       format: 'hours',
       description: 'Test work',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 8
     });
+
+  console.log('create response:', res.status, JSON.stringify(res.body));
 
   expect(res.status).toBe(201);
   expect(res.body).toHaveProperty('_id');
@@ -102,7 +104,7 @@ it('lists delivery notes', async () => {
       projectId,
       format: 'hours',
       description: 'Test work',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 8,
     });
 
@@ -127,7 +129,7 @@ it('gets a delivery note by id', async () => {
       projectId,
       format: 'hours',
       description: 'Inspection work',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 6
     });
 
@@ -155,7 +157,7 @@ it('signs a delivery note', async () => {
       projectId,
       format: 'hours',
       description: 'Signing test',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 4
     });
 
@@ -184,7 +186,7 @@ it('does not allow signing a delivery note twice', async () => {
       projectId,
       format: 'hours',
       description: 'Double sign test',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 5,
     });
 
@@ -217,7 +219,7 @@ it('does not allow deleting a signed delivery note', async () => {
       projectId,
       format: 'hours',
       description: 'Signed deleted protection test',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 3,
     });
 
@@ -248,7 +250,7 @@ it('deletes an unsigned delivery note', async () => {
       projectId,
       format: 'hours',
       description: 'Unsigned delete test',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 2,
     });
 
@@ -274,7 +276,7 @@ it('downloads delivery note PDF', async () => {
       projectId,
       format: 'hours',
       description: 'PDF test',
-      workdate: new Date().toISOString(),
+      workDate: new Date().toISOString(),
       hours: 8
     });
 
@@ -311,7 +313,7 @@ it('returns 400 when signing without signatureData', async () => {
   const created = await request(app)
     .post('/api/deliverynote')
     .set('Authorization', `Bearer ${token}`)
-    .send({ clientId, projectId, format: 'hours', description: 'x', workdate: new Date().toISOString(), hours: 1 });
+    .send({ clientId, projectId, format: 'hours', description: 'x', workDate: new Date().toISOString(), hours: 1 });
 
   const res = await request(app)
     .patch(`/api/deliverynote/${created.body._id}/sign`)

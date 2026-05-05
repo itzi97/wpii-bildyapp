@@ -1,7 +1,7 @@
 // tests/client.test.js
 import request from 'supertest';
 import app from '../src/app.js';
-import { connectDB, closeDB, clearDB } from './setup.js';
+import { connectDB, closeDB, clearDB } from './helpers.js';
 
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
