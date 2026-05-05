@@ -262,7 +262,9 @@ export const deleteDeliveryNote = async (req, res, next) => {
       return next(AppError.badRequest('Signed delivery notes cannot be deleted'));
     }
 
-    await deliveryNote.deleteOne();
+    // Soft delete (unless param is required)
+    deliveryNote.deleted = true;
+    await deliveryNote.save();
 
     return res.status(200).json({
       status: 'success',
