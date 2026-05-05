@@ -9,6 +9,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { Server } from 'socket.io';
 import http from 'http';
+import errorHandler from './middleware/error-handler.js';
 
 // Routes
 import userRoutes from './routes/user.routes.js';
@@ -71,6 +72,10 @@ export const emitToCompany = (companyId, event, data) => {
   io.to(companyId.toString()).emit(event, data);
 };
 
+
+// Catches all errors thrown via next(err)
+app.use(errorHandler);
+
 // Middleware
 app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
@@ -109,5 +114,6 @@ app.use('/api/user', userRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/project', projectRoutes);
 app.use('/api/deliverynote', deliveryNoteRoutes);
+
 
 export default server;
