@@ -6,7 +6,7 @@ import { sendVerificationEmail } from './mail.service.js';
 const notificationService = new EventEmitter();
 
 // Log when a user registers.
-notificationService.on('user:registered', (user) => {
+notificationService.on('user:registered', async (user) => {
   console.log(`User registered: ${user.email}`);
   try {
     await sendVerificationEmail(user.email, user.verificationCode);
@@ -22,7 +22,7 @@ notificationService.on('user:verified', (user) => {
 });
 
 // Log when a user is invited.
-notificationService.on('user:invited', (payload) => {
+notificationService.on('user:invited', async (payload) => {
   console.log(`User invited: ${payload.email}`);
   try {
     await sendVerificationEmail(payload.email, payload.verificationCode);
