@@ -207,7 +207,6 @@ export const signDeliveryNote = async (req, res, next) => {
 export const getDeliveryNotePDF = async (req, res, next) => {
   try {
     const companyId = req.user.company?._id || req.user.company;
-
     const note = await DeliveryNote.findOne({
       _id: req.params.id,
       company: companyId,
@@ -217,15 +216,12 @@ export const getDeliveryNotePDF = async (req, res, next) => {
       .populate('client')
       .populate('project');
 
-    if (!note) {
+    if (!note)
       return next(AppError.notFound('Delivery note not found'));
-    }
 
+    // If already uploaded to cloud, redirect it
     if (note.pdfUrl && note.signed) {
-      return res.status(200).json({
-        status: 'success',
-        pdfUrl: note.pdfUrl,
-      });
+      return res.redirect(note.pdfUrl);
     }
 
     const company = await Company.findById(note.company);
