@@ -159,9 +159,9 @@ router.put('/:id', validate(updateClientSchema), updateClient);
  *         required: true
  *         schema: { type: string }
  *       - in: query
- *         name: hard
- *         schema: { type: boolean, default: false }
- *         description: If true, permanently deletes the client
+ *         name: soft
+ *         schema: { type: boolean } 
+ *         description: If true, soft-deletes (archives) the client
  *     responses:
  *       200:
  *         description: Deleted
