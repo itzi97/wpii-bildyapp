@@ -25,7 +25,32 @@ export const io = new Server(server, {
 });
 
 // Socket.IO auth middleware
-io.use(authenticateToken);
+// io.use(authenticateToken);
+io.use((socket, next) => {
+  try {
+    const token =
+      socket.handshake.auth?.token ||
+      socket.handshake.headers.authorization?.split(' ')[1];
+
+    if (!token || !token.startsWith('Bearer ')) {
+      return next(new Error('Access token required'));
+    }
+
+    const parts = token.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      return next(new Error('Invalid token format'));
+    }
+
+    const payload = jwt.verify(parts[1], config.JWT_SECRET);
+
+    // Payload stored in socket directly
+    socket.user = payload;
+    next();
+  } catch (error) {
+    console.error('Socket JWT error:', error.message);
+    next(new Error('Invalid or expired token'));
+  }
+});
 
 // Socket.IO events
 io.on('connection', (socket) => {
