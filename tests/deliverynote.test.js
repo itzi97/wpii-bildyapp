@@ -88,8 +88,8 @@ it('creates a delivery note', async () => {
   console.log('create response:', res.status, JSON.stringify(res.body));
 
   expect(res.status).toBe(201);
-  expect(res.body).toHaveProperty('_id');
-  expect(res.body.format).toBe('hours');
+  expect(res.body.data).toHaveProperty('_id');
+  expect(res.body.data.format).toBe('hours');
 });
 
 // GET /api/deliverynote: lists notes
