@@ -1,5 +1,12 @@
 // tests/deliverynote.test.js
 import { jest } from '@jest/globals'
+
+// mock jest data
+await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
+  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
+  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
+}));
+
 import request from 'supertest';
 import { connectDB, closeDB, clearDB } from './helpers.js';
 
@@ -14,12 +21,6 @@ const baseUser = {
   email: 'test@bildyapp.com',
   password: 'Password123!',
 };
-
-// mock jest data
-await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
-  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
-  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
-}));
 
 // Setup helper
 const setup = async () => {
@@ -202,7 +203,9 @@ it('does not allow signing a delivery note twice', async () => {
 
   const res = await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
     .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
+
 
   // TODO
   expect(res.status).toBe(409);
@@ -236,8 +239,8 @@ it('does not allow deleting a signed delivery note', async () => {
     .delete(`/api/deliverynote/${noteId}`)
     .set('Authorization', `Bearer ${token}`);
 
-  expect(res.status).toBe(200);
-  expect(res.body.message).toContain('deleted');
+  expect(res.status).toBe(403);
+  expect(res.body.error).toBeDefined();
 });
 
 // DELETE /api/deliverynote/:id: succeeds when unsigned
