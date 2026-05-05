@@ -147,12 +147,15 @@ router.get('/:id', authenticateToken, getDeliveryNote);
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required: [signatureData]
  *             properties:
- *               signatureData: { type: string, description: Base64 signature image }
+ *               signature:
+ *                 type: string
+ *                 format: binary
+ *                 description: Signature image file
  *     responses:
  *       200:
  *         description: Delivery note signed
