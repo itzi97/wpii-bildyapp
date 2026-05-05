@@ -56,7 +56,7 @@ export const updateProject = async (req, res, next) => {
       return next(AppError.notFound('Project not found'));
 
     // If projectCode is charging, check for duplicates
-    if (req.body.projectCoe && req.body.projectCode.toUpperCase() !== project.projectCode) {
+    if (req.body.projectCode && req.body.projectCode.toUpperCase() !== project.projectCode) {
       const duplicate = await Project.findOne({
         company,
         projectCode: req.body.projectCode.toUpperCase()
