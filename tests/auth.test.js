@@ -1,7 +1,7 @@
 // tests/auth.test.js
 import request from 'supertest';
 import app from '../src/app.js';
-import { connectDB, closeDB, clearDB } from './setup.js';
+import { connectDB, closeDB, clearDB } from './helpers.js';
 import User from '../src/models/User.js';
 
 beforeAll(async () => await connectDB());

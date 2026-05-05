@@ -48,3 +48,9 @@ export const deliveryNoteIdSchema = z.object({
     id: objectId,
   }),
 });
+
+export const signDeliveryNoteSchema = z.object({
+  body: z.object({
+    signatureData: z.string().min(1, 'signatureData is required'),
+  }),
+});
