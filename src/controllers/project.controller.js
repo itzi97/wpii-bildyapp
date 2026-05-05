@@ -33,7 +33,7 @@ export const createProject = async (req, res, next) => {
       company
     });
 
-    req.app.get('io')?.to(company.toString()).emit('project:new', project);
+    req.app.get('io')?.to(company.toString()).emit('projectnew', project);
 
     res.status(201).json({ ok: true, project });
   } catch (err) {
