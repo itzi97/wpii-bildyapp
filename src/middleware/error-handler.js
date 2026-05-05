@@ -1,4 +1,6 @@
+// src/middleware/error-handler.js
 import AppError from '../utils/AppError.js';
+import { logErrorToSlack } from '../services/logger.service.js';
 
 // Centralized Express error middleware (API response consistency).
 export default function errorHandler(err, req, res, next) {
@@ -12,6 +14,7 @@ export default function errorHandler(err, req, res, next) {
 
   // Unexpected errors fall back to generic 500 response.
   console.error(err);
+  await logErrorToSlack(err, req);
 
   return res.status(500).json({
     error: 'INTERNAL_ERROR',
