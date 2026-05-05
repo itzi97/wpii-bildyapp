@@ -1,0 +1,25 @@
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+Access-Control-Allow-Origin: *
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 79
+Date: Tue, 05 May 2026 16:09:56 GMT
+X-RateLimit-Reset: 1777997765
+Content-Type: application/pdf
+Content-Disposition: inline; filename="deliverynote-69fa161df93ce2e0d8fb7f36.pdf"
+Content-Length: 2207
+ETag: W/"89f-ghvcg36ua/bQhsKmKq6depvdgA0"
+Connection: keep-alive
+Keep-Alive: timeout=5
+
