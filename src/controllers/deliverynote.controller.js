@@ -115,7 +115,7 @@ export const getDeliveryNotePDF = async (req, res, next) => {
       Project.findById(note.project),
       Company.findById(note.company),
     ]);
-    const pdfBuffer = await generateDeliveryNotePDF(note, {
+    const pdfBuffer = await generateDeliveryNotePdfBuffer(note, {
       client,
       project,
       company,
