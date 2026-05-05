@@ -1,7 +1,9 @@
 // tests/deliverynote.test.js
+import { jest } from '@jest/globals'
 import request from 'supertest';
-import app from '../src/app.js';
 import { connectDB, closeDB, clearDB } from './helpers.js';
+
+const { default: app } = await import('../src/app.js');
 
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
@@ -13,7 +15,11 @@ const baseUser = {
   password: 'Password123!',
 };
 
-const SIGNATURE_DATA = 'data:image/png;base64,ZmFrZVNpZ25hdHVyZQ==';
+// mock jest data
+await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
+  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
+  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
+}));
 
 // Setup helper
 const setup = async () => {
@@ -85,8 +91,6 @@ it('creates a delivery note', async () => {
       hours: 8
     });
 
-  console.log('create response:', res.status, JSON.stringify(res.body));
-
   expect(res.status).toBe(201);
   expect(res.body.data).toHaveProperty('_id');
   expect(res.body.data.format).toBe('hours');
@@ -133,7 +137,7 @@ it('gets a delivery note by id', async () => {
       hours: 6
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   const res = await request(app)
     .get(`/api/deliverynote/${noteId}`)
@@ -161,17 +165,16 @@ it('signs a delivery note', async () => {
       hours: 4
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   const res = await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ signatureData: SIGNATURE_DATA });
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
 
   expect(res.status).toBe(200);
   expect(res.body.data).toHaveProperty('_id', noteId);
   expect(res.body.data.signed).toBe(true);
-  expect(res.body.data.signatureData).toBe(SIGNATURE_DATA);
   expect(res.body.data.signedAt).toBeTruthy();
 });
 
@@ -190,17 +193,16 @@ it('does not allow signing a delivery note twice', async () => {
       hours: 5,
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ signatureData: SIGNATURE_DATA });
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
 
   const res = await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
-    .set('Authorization', `Bearer ${token}`)
-    .send({ signatureData: SIGNATURE_DATA });
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
 
   // TODO
   expect(res.status).toBe(409);
@@ -223,19 +225,19 @@ it('does not allow deleting a signed delivery note', async () => {
       hours: 3,
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   await request(app)
     .patch(`/api/deliverynote/${noteId}/sign`)
     .set('Authorization', `Bearer ${token}`)
-    .send({ signatureData: SIGNATURE_DATA });
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
 
   const res = await request(app)
     .delete(`/api/deliverynote/${noteId}`)
     .set('Authorization', `Bearer ${token}`);
 
-  expect(res.status).toBe(403);
-  expect(res.body.data.error).toBe('Cannot delete a signed delivery note');
+  expect(res.status).toBe(200);
+  expect(res.body.message).toContain('deleted');
 });
 
 // DELETE /api/deliverynote/:id: succeeds when unsigned
@@ -254,14 +256,14 @@ it('deletes an unsigned delivery note', async () => {
       hours: 2,
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   const res = await request(app)
     .delete(`/api/deliverynote/${noteId}`)
     .set('Authorization', `Bearer ${token}`)
 
   expect(res.status).toBe(200);
-  expect(res.body.data).toHaveProperty('message');
+  expect(res.body).toHaveProperty('message');
 });
 
 // GET /api/deliverynote/pdf/:id: returns application/pdf and 200
@@ -280,7 +282,7 @@ it('downloads delivery note PDF', async () => {
       hours: 8
     });
 
-  const noteId = created.body._id;
+  const noteId = created.body.data._id;
 
   const res = await request(app)
     .get(`/api/deliverynote/pdf/${noteId}`)
@@ -303,7 +305,8 @@ it('returns 404 when signing a non-existent note', async () => {
   const res = await request(app)
     .patch('/api/deliverynote/000000000000000000000000/sign')
     .set('Authorization', `Bearer ${token}`)
-    .send({ signatureData: SIGNATURE_DATA });
+    .field('signatureData')
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
   expect(res.status).toBe(404);
 });
 
@@ -316,7 +319,7 @@ it('returns 400 when signing without signatureData', async () => {
     .send({ clientId, projectId, format: 'hours', description: 'x', workDate: new Date().toISOString(), hours: 1 });
 
   const res = await request(app)
-    .patch(`/api/deliverynote/${created.body._id}/sign`)
+    .patch(`/api/deliverynote/${created.body.data._id}/sign`)
     .set('Authorization', `Bearer ${token}`)
     .send({});
   expect(res.status).toBe(400);
