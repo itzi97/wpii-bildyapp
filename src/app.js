@@ -1,4 +1,6 @@
 // src/app.js
+import jwt from 'jsonwebtoken';
+import config from './config/index.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -7,7 +9,6 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { Server } from 'socket.io';
 import http from 'http';
-import { authenticateToken } from './middleware/auth.middleware.js';
 
 // Routes
 import userRoutes from './routes/user.routes.js';
@@ -23,6 +24,9 @@ export const io = new Server(server, {
     credentials: true
   }
 });
+
+// Store io in app
+app.set('io', io);
 
 // Socket.IO auth middleware
 // io.use(authenticateToken);
@@ -54,7 +58,7 @@ io.use((socket, next) => {
 
 // Socket.IO events
 io.on('connection', (socket) => {
-  const companyId = socket.user.company._id;
+  const companyId = socket.user.company._id || socket.user.company;
   socket.join(companyId.toString());
 
   socket.on('disconnect', () => {

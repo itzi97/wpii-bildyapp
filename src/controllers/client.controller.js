@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.js';
 export const createClient = async (req, res, next) => {
   try {
     const { id: userId } = req.user;
-    const company = req.user.company._id;
+    const company = req.user.company?._id || req.user.company;
 
     const existing = await Client.findOne({
       company,
@@ -20,7 +20,7 @@ export const createClient = async (req, res, next) => {
     const client = await Client.create({ ...req.body, user: userId, company });
 
     // Socker.IO - emit to company room
-    req.app.get('io')?.to(company.toString()).emit('client:new', client);
+    req.app.get('io')?.to(company.toString()).emit('clientnew', client);
 
     res.status(201).json({ ok: true, client });
   } catch (err) {
@@ -31,9 +31,10 @@ export const createClient = async (req, res, next) => {
 // PUT /api/client/:id
 export const updateClient = async (req, res, next) => {
   try {
+    const company = req.user.company?._id || req.user.company;
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: company,
       deleted: false
     });
 
@@ -42,7 +43,7 @@ export const updateClient = async (req, res, next) => {
     // If CIF is changing, check it isn't already taken
     if (req.body.cif && req.body.cif.toUpperCase() !== client.cif) {
       const duplicate = await Client.findOne({
-        company: req.user.company._id,
+        company: company
         cif: req.body.cif.toUpperCase()
       });
 
@@ -62,7 +63,7 @@ export const updateClient = async (req, res, next) => {
 // GET /api/client
 export const listClients = async (req, res, next) => {
   try {
-    const company = req.user.company._id;
+    const company = req.user.company?._id || req.user.company;
     const { page = 1, limit = 10, name, sort = '-createdAt' } = req.query;
 
     const filter = { company, deleted: false };
@@ -89,9 +90,10 @@ export const listClients = async (req, res, next) => {
 // GET /api/client/:id
 export const getClient = async (req, res, next) => {
   try {
+    const company = req.user.company?._id || req.user.company;
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: company,
       deleted: false
     });
 
@@ -106,9 +108,10 @@ export const getClient = async (req, res, next) => {
 // DELETE /api/client/:id (?soft=true for soft delete)
 export const deleteClient = async (req, res, next) => {
   try {
+    const company = req.user.company?._id || req.user.company;
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: company,
       deleted: false
     });
 
@@ -131,8 +134,9 @@ export const deleteClient = async (req, res, next) => {
 // GET /api/client/archived
 export const listArchivedClients = async (req, res, next) => {
   try {
+    const company = req.user.company?._id || req.user.company;
     const clients = await Client.find({
-      company: req.user.company._id,
+      company: company,
       deleted: true
     }).sort('-createdAt');
 
@@ -145,9 +149,10 @@ export const listArchivedClients = async (req, res, next) => {
 // PATCH /api/client/:id/restore
 export const restoreClient = async (req, res, next) => {
   try {
+    const company = req.user.company?._id || req.user.company;
     const client = await Client.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: company,
       deleted: true
     });
 
