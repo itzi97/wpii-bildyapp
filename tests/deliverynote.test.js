@@ -113,8 +113,8 @@ it('lists delivery notes', async () => {
     .set('Authorization', `Bearer ${token}`);
 
   expect(res.status).toBe(200);
-  expect(Array.isArray(res.body)).toBe(true);
-  expect(res.body.length).toBeGreaterThan(0);
+  expect(Array.isArray(res.body.data)).toBe(true);
+  expect(res.body.data.length).toBeGreaterThan(0);
 });
 
 // GET /api/deliverynote/:id: returns one note
@@ -140,9 +140,9 @@ it('gets a delivery note by id', async () => {
     .set('Authorization', `Bearer ${token}`);
 
   expect(res.status).toBe(200);
-  expect(res.body).toHaveProperty('_id', noteId);
-  expect(res.body.format).toBe('hours');
-  expect(res.body.description).toBe('Inspection work');
+  expect(res.body.data).toHaveProperty('_id', noteId);
+  expect(res.body.data.format).toBe('hours');
+  expect(res.body.data.description).toBe('Inspection work');
 });
 
 // PATCH /api/deliverynote/:id/sign signs it, signing it twice returns 409
@@ -169,10 +169,10 @@ it('signs a delivery note', async () => {
     .send({ signatureData: SIGNATURE_DATA });
 
   expect(res.status).toBe(200);
-  expect(res.body).toHaveProperty('_id', noteId);
-  expect(res.body.signed).toBe(true);
-  expect(res.body.signatureData).toBe(SIGNATURE_DATA);
-  expect(res.body.signedAt).toBeTruthy();
+  expect(res.body.data).toHaveProperty('_id', noteId);
+  expect(res.body.data.signed).toBe(true);
+  expect(res.body.data.signatureData).toBe(SIGNATURE_DATA);
+  expect(res.body.data.signedAt).toBeTruthy();
 });
 
 it('does not allow signing a delivery note twice', async () => {
@@ -204,7 +204,7 @@ it('does not allow signing a delivery note twice', async () => {
 
   // TODO
   expect(res.status).toBe(409);
-  expect(res.body.error).toBe('Already signed');
+  expect(res.body.data.error).toBe('Already signed');
 });
 
 // DELETE /api/deliverynote/:id: returns 403 when signed
@@ -235,7 +235,7 @@ it('does not allow deleting a signed delivery note', async () => {
     .set('Authorization', `Bearer ${token}`);
 
   expect(res.status).toBe(403);
-  expect(res.body.error).toBe('Cannot delete a signed delivery note');
+  expect(res.body.data.error).toBe('Cannot delete a signed delivery note');
 });
 
 // DELETE /api/deliverynote/:id: succeeds when unsigned
@@ -261,7 +261,7 @@ it('deletes an unsigned delivery note', async () => {
     .set('Authorization', `Bearer ${token}`)
 
   expect(res.status).toBe(200);
-  expect(res.body).toHaveProperty('message');
+  expect(res.body.data).toHaveProperty('message');
 });
 
 // GET /api/deliverynote/pdf/:id: returns application/pdf and 200
