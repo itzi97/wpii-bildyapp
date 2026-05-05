@@ -6,8 +6,8 @@ import AppError from '../utils/AppError.js';
 // POST /api/project
 export const createProject = async (req, res, next) => {
   try {
-    const { id: userId } = req.user;
-    const company = req.user.company._id;
+    const userId = req.user._id || req.user.id;
+    const company = req.user.company?._id || req.user.company;
 
     // Verify client belongs to the same company
     const client = await Client.findOne({
@@ -44,7 +44,7 @@ export const createProject = async (req, res, next) => {
 // PUT /api/project/:id
 export const updateProject = async (req, res, next) => {
   try {
-    const company = req.user.company._id;
+    const company = req.user.company?._id || req.user.company;
 
     const project = await Project.findOne({
       _id: req.params.id,
@@ -88,7 +88,7 @@ export const updateProject = async (req, res, next) => {
 // GET /api/project
 export const listProjects = async (req, res, next) => {
   try {
-    const company = req.user.company._id;
+    const company = req.user.company?._id || req.user.company;
     const { page = 1, limit = 10, client, name, active, sort = '-createdAt' } = req.query;
 
     const filter = { company, deleted: false };
@@ -119,7 +119,7 @@ export const getProject = async (req, res, next) => {
   try {
     const project = await Project.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: req.user.company?._id || req.user.company,
       deleted: false
     }).populate('client', 'name cif email');
 
@@ -137,7 +137,7 @@ export const deleteProject = async (req, res, next) => {
   try {
     const project = await Project.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: req.user.company?._id || req.user.company,
       deleted: false
     });
 
@@ -160,7 +160,7 @@ export const deleteProject = async (req, res, next) => {
 export const listArchivedProjects = async (req, res, next) => {
   try {
     const projects = await Project.find({
-      company: req.user.company._id,
+      company: req.user.company?._id || req.user.company,
       deleted: true
     }).populate('client', 'name cif').sort('-createdAt');
 
@@ -175,7 +175,7 @@ export const restoreProject = async (req, res, next) => {
   try {
     const project = await Project.findOne({
       _id: req.params.id,
-      company: req.user.company._id,
+      company: req.user.company?._id || req.user.company,
       deleted: true
     });
 
