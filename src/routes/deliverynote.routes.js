@@ -1,6 +1,7 @@
 // src/routes/deliverynote.routes.js
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
+import validate from '../middleware/validate.js';
 import { uploadMemory } from '../middleware/upload.js';
 import {
   createDeliveryNote,
@@ -10,6 +11,10 @@ import {
   getDeliveryNotePDF,
   deleteDeliveryNote,
 } from '../controllers/deliverynote.controller.js';
+import {
+  createDeliveryNoteSchema,
+  deliveryNoteIdSchema,
+} from '../validators/deliverynote.validator.js';
 
 const router = Router();
 
@@ -29,14 +34,52 @@ router.use(authenticateToken);
  *         application/json:
  *           schema:
  *             type: object
- *             required: [clientId, projectId, format, workdate]
+ *             required: [clientId, projectId, format, workDate]
  *             properties:
- *               clientId:    { type: string }
- *               projectId:   { type: string }
- *               format:      { type: string, enum: [hours, material] }
- *               description: { type: string }
- *               workdate:    { type: string, format: date-time }
- *               hours:       { type: number }
+ *               clientId:
+ *                 type: string
+ *                 example: 6818a5f0c1234567890abcde
+ *               projectId:
+ *                 type: string
+ *                 example: 6818a5f0c1234567890abcdf
+ *               format:
+ *                 type: string
+ *                 enum: [hours, material]
+ *               description:
+ *                 type: string
+ *                 example: Electrical installation work
+ *               workDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: 2026-05-05T08:00:00.000Z
+ *               hours:
+ *                 type: number
+ *                 example: 8
+ *               workers:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: Juan Pérez
+ *                     hours:
+ *                       type: number
+ *                       example: 4
+ *               materials:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     material:
+ *                       type: string
+ *                       example: Cement
+ *                     quantity:
+ *                       type: number
+ *                       example: 10
+ *                     unit:
+ *                       type: string
+ *                       example: bags
  *     responses:
  *       201:
  *         description: Delivery note created
@@ -49,7 +92,7 @@ router.use(authenticateToken);
  *       401:
  *         description: Unauthorized
  */
-router.post('/', authenticateToken, createDeliveryNote);
+router.post('/', validate(createDeliveryNoteSchema), createDeliveryNote);
 
 /**
  * @swagger
@@ -62,23 +105,53 @@ router.post('/', authenticateToken, createDeliveryNote);
  *     parameters:
  *       - in: query
  *         name: page
- *         schema: { type: integer, default: 1 }
+ *         schema:
+ *           type: integer
+ *           default: 1
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 10 }
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: project
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: client
+ *         schema:
+ *           type: string
  *       - in: query
  *         name: format
- *         schema: { type: string, enum: [hours, material] }
+ *         schema:
+ *           type: string
+ *           enum: [hours, material]
  *       - in: query
  *         name: signed
- *         schema: { type: boolean }
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: -workDate
  *     responses:
  *       200:
  *         description: List of delivery notes
  *       401:
  *         description: Unauthorized
  */
-router.get('/', authenticateToken, getDeliveryNotes);
+router.get('/', getDeliveryNotes);
 
 /**
  * @swagger
@@ -92,7 +165,8 @@ router.get('/', authenticateToken, getDeliveryNotes);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: PDF file
@@ -104,7 +178,7 @@ router.get('/', authenticateToken, getDeliveryNotes);
  *       404:
  *         description: Not found
  */
-router.get('/pdf/:id', authenticateToken, getDeliveryNotePDF);
+router.get('/pdf/:id', validate(deliveryNoteIdSchema), getDeliveryNotePDF);
 
 /**
  * @swagger
@@ -118,7 +192,8 @@ router.get('/pdf/:id', authenticateToken, getDeliveryNotePDF);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Delivery note found
@@ -129,7 +204,7 @@ router.get('/pdf/:id', authenticateToken, getDeliveryNotePDF);
  *       404:
  *         description: Not found
  */
-router.get('/:id', authenticateToken, getDeliveryNote);
+router.get('/:id', validate(deliveryNoteIdSchema), getDeliveryNote);
 
 /**
  * @swagger
@@ -143,14 +218,15 @@ router.get('/:id', authenticateToken, getDeliveryNote);
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [signatureData]
+ *             required: [signature]
  *             properties:
  *               signature:
  *                 type: string
@@ -164,7 +240,12 @@ router.get('/:id', authenticateToken, getDeliveryNote);
  *       404:
  *         description: Not found
  */
-router.patch('/:id/sign', authenticateToken, uploadMemory.single('signature'), signDeliveryNote);
+router.patch(
+  '/:id/sign',
+  validate(deliveryNoteIdSchema),
+  uploadMemory.single('signature'),
+  signDeliveryNote
+);
 
 /**
  * @swagger
@@ -178,7 +259,8 @@ router.patch('/:id/sign', authenticateToken, uploadMemory.single('signature'), s
  *       - in: path
  *         name: id
  *         required: true
- *         schema: { type: string }
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Deleted
@@ -187,6 +269,6 @@ router.patch('/:id/sign', authenticateToken, uploadMemory.single('signature'), s
  *       404:
  *         description: Not found
  */
-router.delete('/:id', authenticateToken, deleteDeliveryNote);
+router.delete('/:id', validate(deliveryNoteIdSchema), deleteDeliveryNote);
 
 export default router;
