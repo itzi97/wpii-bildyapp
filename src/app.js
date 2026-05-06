@@ -8,7 +8,7 @@ import config from './config/index.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimiter from './middleware/rate-limit.js';
 import { swaggerServe, swaggerSetup } from './config/swagger.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -94,14 +94,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting, 100 requests per 15 minutes per IP by default.
-// Values are configurable via environment variables for different environments.
-// Rate limiting — disabled in test environment to avoid 429s during integration tests
-if (process.env.NODE_ENV !== 'test') {
-  app.use(rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
-  }));
-}
+app.use(rateLimiter)
 
 // -- Swagger UI
 // Available at /api-docs — reads the OpenAPI spec built in src/config/swagger.js

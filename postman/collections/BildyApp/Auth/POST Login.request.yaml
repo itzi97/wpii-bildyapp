@@ -1,0 +1,15 @@
+$kind: http-request
+name: POST Login
+method: POST
+url: '{{baseUrl}}/api/user/login'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "user@bildyapp.com",
+      "password": "Password123!"
+    }

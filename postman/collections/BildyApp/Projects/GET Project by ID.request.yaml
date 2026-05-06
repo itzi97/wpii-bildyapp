@@ -1,0 +1,10 @@
+$kind: http-request
+name: GET Project by ID
+method: GET
+url: '{{baseUrl}}/api/project/{{projectId}}'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

@@ -1,0 +1,10 @@
+$kind: http-request
+name: DELETE Project
+method: DELETE
+url: '{{baseUrl}}/api/project/{{projectId}}'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

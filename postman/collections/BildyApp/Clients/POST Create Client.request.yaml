@@ -1,0 +1,23 @@
+$kind: http-request
+name: POST Create Client
+method: POST
+url: '{{baseUrl}}/api/client'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Client Name",
+      "cif": "A12345678",
+      "email": "client@example.com",
+      "phone": "+34600000000",
+      "address": "Calle Ejemplo 1, Madrid"
+    }

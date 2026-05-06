@@ -1,0 +1,10 @@
+$kind: http-request
+name: GET List Clients
+method: GET
+url: '{{baseUrl}}/api/client'
+order: 2000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

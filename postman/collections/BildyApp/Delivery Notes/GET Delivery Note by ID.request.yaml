@@ -1,0 +1,10 @@
+$kind: http-request
+name: GET Delivery Note by ID
+method: GET
+url: '{{baseUrl}}/api/deliverynote/{{deliveryNoteId}}'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

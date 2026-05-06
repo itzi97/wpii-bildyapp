@@ -28,4 +28,4 @@ coverage/
 *.log
 
 # postman
-postman/
+#.postman

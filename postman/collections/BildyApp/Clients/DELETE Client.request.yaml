@@ -1,0 +1,10 @@
+$kind: http-request
+name: DELETE Client
+method: DELETE
+url: '{{baseUrl}}/api/client/{{clientId}}'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

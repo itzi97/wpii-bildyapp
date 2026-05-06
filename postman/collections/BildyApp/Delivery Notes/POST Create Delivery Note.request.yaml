@@ -1,0 +1,28 @@
+$kind: http-request
+name: POST Create Delivery Note
+method: POST
+url: '{{baseUrl}}/api/deliverynote'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "clientId": "{{clientId}}",
+      "projectId": "{{projectId}}",
+      "format": "hours",
+      "description": "Electrical installation work",
+      "workDate": "2026-05-05T08:00:00.000Z",
+      "hours": 8,
+      "workers": [
+        { "name": "Juan Pérez", "hours": 4 },
+        { "name": "María López", "hours": 4 }
+      ]
+    }

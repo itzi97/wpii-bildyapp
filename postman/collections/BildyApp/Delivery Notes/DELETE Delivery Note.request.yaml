@@ -1,0 +1,10 @@
+$kind: http-request
+name: DELETE Delivery Note
+method: DELETE
+url: '{{baseUrl}}/api/deliverynote/{{deliveryNoteId}}'
+order: 6000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

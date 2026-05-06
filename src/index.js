@@ -3,7 +3,7 @@
 // Graceful shutdown handlers ensure the DB connection and Socket.IO server
 // are cleanly closed before the process exits on SIGTERM or SIGINT.
 import server from './app.js';
-import { connectDB } from './config/index.js';
+import { connectDB } from './config/database.js';
 import mongoose from 'mongoose';
 
 const PORT = process.env.PORT || 3000;

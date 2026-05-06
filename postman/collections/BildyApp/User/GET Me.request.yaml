@@ -1,0 +1,10 @@
+$kind: http-request
+name: GET Me
+method: GET
+url: '{{baseUrl}}/api/user/me'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

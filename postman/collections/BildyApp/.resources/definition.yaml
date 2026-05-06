@@ -1,0 +1,17 @@
+$kind: collection
+name: BildyApp
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3000'
+  - key: accessToken
+    value: ''
+  - key: refreshToken
+    value: ''
+  - key: userId
+    value: ''
+  - key: clientId
+    value: ''
+  - key: projectId
+    value: ''
+  - key: deliveryNoteId
+    value: ''
