@@ -22,16 +22,6 @@ beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
 
-// Jest mocks
-jest.mock('../src/services/storage.service.js', () => ({
-  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'mock://signature.png' }),
-  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'mock://note.pdf' }),
-}));
-
-jest.mock('../src/services/pdf.service.js', () => ({
-  generateDeliveryNotePdfBuffer: jest.fn().mockResolvedValue(Buffer.from('mock pdf')),
-}));
-
 // Globals for tests
 const baseUser = {
   email: 'test@bildyapp.com',
@@ -282,7 +272,7 @@ it('deletes an unsigned delivery note', async () => {
     .set('Authorization', `Bearer ${token}`)
 
   expect(res.status).toBe(200);
-  expect(res.body.data).toHaveProperty('message');
+  expect(res.body.message).toBeTruthy();
 });
 
 // GET /api/deliverynote/pdf/:id: returns application/pdf and 200
