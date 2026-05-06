@@ -13,6 +13,8 @@ mongo_data
 
 # test artifacts
 test-logo.png
+test-signature.png
+test-signed.pdf
 test.pdf
 refresh_token.txt
 
