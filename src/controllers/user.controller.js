@@ -181,7 +181,7 @@ export const updatePersonalData = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { name, lastName, nif },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true },
     );
 
     notificationService.emit('user:updated', {
@@ -336,7 +336,7 @@ export const deleteUser = async (req, res, next) => {
       await User.findByIdAndUpdate(
         req.user._id,
         { deleted: true },
-        { new: true, runValidators: true, withDeleted: true }
+        { returnDocument: 'after', runValidators: true, withDeleted: true },
       );
 
       notificationService.emit('user:deleted', {
