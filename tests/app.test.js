@@ -23,7 +23,7 @@ describe('app socket helpers', () => {
 });
 
 describe('app rate limit middleware', () => {
-  it('skips rate limiting in test environment', async () => {
+  it('does not set x-ratelimit headers when NODE_ENV=test', async () => {
     // In NODE_ENV=test the rate limiter is disabled to prevent 429s during
     // integration tests. We verify that no rate-limit headers are present.
     const res = await request(app)
