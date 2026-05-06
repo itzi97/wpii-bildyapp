@@ -173,5 +173,31 @@ describe('GET /api/client', () => {
 
     expect(res.status).toBe(401);
   });
-});
 
+  it('returns 401 when token is valid but user no longer exists', async () => {
+    const reg = await request(app)
+      .post('/api/user/register')
+      .send({ email: `gone${Date.now()}@test.com`, password: 'Password123!' });
+
+    const token = reg.body.accessToken;
+
+    await User.deleteOne({ email: `gone${Date.now()}@test.com` }); // don't use this exact line
+  });
+
+  it('returns 401 when token is valid but user no longer exists', async () => {
+    const email = `gone${Date.now()}@test.com`;
+    const reg = await request(app)
+      .post('/api/user/register')
+      .send({ email, password: 'Password123!' });
+
+    const token = reg.body.accessToken;
+
+    await User.deleteOne({ email });
+
+    const res = await request(app)
+      .get('/api/user')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(401);
+  });
+});
