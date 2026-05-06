@@ -29,25 +29,18 @@ export const io = new Server(server, {
 app.set('io', io);
 
 // Socket.IO auth middleware
-// io.use(authenticateToken);
 io.use((socket, next) => {
   try {
-    const token =
+    const raw =
       socket.handshake.auth?.token ||
-      socket.handshake.headers.authorization?.split(' ')[1];
+      socket.handshake.headers.authorization;
 
-    if (!token || !token.startsWith('Bearer ')) {
-      return next(new Error('Access token required'));
-    }
+    if (!raw) return next(new Error('Access token required'));
 
-    const parts = token.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      return next(new Error('Invalid token format'));
-    }
+    // Accept both "Bearer <token>" and raw token directly just in case
+    const token = raw.startsWith('Bearer ') ? raw.split(' ')[1] : raw;
 
-    const payload = jwt.verify(parts[1], config.JWT_SECRET);
-
-    // Payload stored in socket directly
+    const payload = jwt.verify(token, config.JWT_SECRET);
     socket.user = payload;
     next();
   } catch (error) {
