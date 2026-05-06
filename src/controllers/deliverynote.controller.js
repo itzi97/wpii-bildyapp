@@ -52,7 +52,7 @@ export const createDeliveryNote = async (req, res, next) => {
       .populate('client', 'name cif email')
       .populate('project', 'name projectCode');
 
-    req.app.get('io')?.to(String(companyId)).emit('deliverynotenew', populatedNote);
+    req.app.get('io')?.to(String(companyId)).emit('delivery-note:new', populatedNote);
 
     return res.status(201).json({
       status: 'success',
@@ -180,7 +180,7 @@ export const signDeliveryNote = async (req, res, next) => {
     deliveryNote.pdfUrl = pdfUpload.secure_url;
 
     await deliveryNote.save();
-    req.app.get('io')?.to(String(companyId)).emit('deliverynotesigned', deliveryNote);
+    req.app.get('io')?.to(String(companyId)).emit('delivery-note:signed', deliveryNote);
 
     return res.status(200).json({ status: 'success', message: 'Delivery note signed successfully', data: deliveryNote });
   } catch (error) {
