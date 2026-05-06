@@ -55,7 +55,7 @@ export const updateProject = async (req, res, next) => {
     if (!project)
       return next(AppError.notFound('Project not found'));
 
-    // If projectCode is charging, check for duplicates
+    // If projectCode is charging, check for duplicates in this company
     if (req.body.projectCode && req.body.projectCode.toUpperCase() !== project.projectCode) {
       const duplicate = await Project.findOne({
         company,
@@ -65,7 +65,7 @@ export const updateProject = async (req, res, next) => {
         return next(AppError.conflict('A project with this code already exists in your company'));
     }
 
-    // If client is charging, verify it belongs to the same company
+    // If client is changing, verify it belongs to the same company
     if (req.body.client) {
       const client = await Client.findOne({
         _id: req.body.client,
