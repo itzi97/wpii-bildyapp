@@ -417,3 +417,35 @@ it('rejects material-format note with no materials', async () => {
 
   expect(res.status).toBe(400);
 });
+
+it('returns 404 when client not found on create', async () => {
+  const { token, projectId } = await setup();
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId: '000000000000000000000000',
+      projectId,
+      format: 'hours',
+      description: 'x',
+      workDate: new Date().toISOString(),
+      hours: 1
+    });
+  expect(res.status).toBe(404);
+});
+
+it('returns 404 when project not found on create', async () => {
+  const { token, clientId } = await setup();
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId: '000000000000000000000000',
+      format: 'hours',
+      description: 'x',
+      workDate: new Date().toISOString(),
+      hours: 1
+    });
+  expect(res.status).toBe(404);
+});

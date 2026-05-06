@@ -209,6 +209,27 @@ describe('User endpoints', () => {
     const res = await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
     expect(res.status).toBe(409);
   });
+
+  it('returns 401 when login with unverified user', async () => {
+    const email = `unverified${Date.now()}@test.com`;
+    await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
+    // Do NOT verify — status stays 'pending'
+    const res = await request(app).post('/api/user/login').send({ email, password: 'TestPassword123' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 400 when validating already-verified email', async () => {
+    const email = `alreadyv${Date.now()}@test.com`;
+    const reg = await request(app).post('/api/user/register').send({ email, password: 'TestPassword123' });
+    const token = reg.body.accessToken;
+    const User = (await import('../src/models/User.js')).default;
+    const user = await User.findOne({ email });
+    // Verify once
+    await request(app).put('/api/user/validation').set('Authorization', `Bearer ${token}`).send({ code: user.verificationCode });
+    // Try to verify again
+    const res = await request(app).put('/api/user/validation').set('Authorization', `Bearer ${token}`).send({ code: user.verificationCode });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('Role middleware — forbidden access', () => {
