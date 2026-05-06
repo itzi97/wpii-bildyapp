@@ -17,12 +17,8 @@ body:
     {
       "clientId": "{{clientId}}",
       "projectId": "{{projectId}}",
+      "description": "Test delivery note",
+      "workDate": "2026-05-06",
       "format": "hours",
-      "description": "Electrical installation work",
-      "workDate": "2026-05-05T08:00:00.000Z",
-      "hours": 8,
-      "workers": [
-        { "name": "Juan Pérez", "hours": 4 },
-        { "name": "María López", "hours": 4 }
-      ]
+      "hours": 8
     }

@@ -1,7 +1,7 @@
 $kind: http-request
 name: GET Me
 method: GET
-url: '{{baseUrl}}/api/user/me'
+url: '{{baseUrl}}/api/user'
 order: 1000
 auth:
   type: bearer

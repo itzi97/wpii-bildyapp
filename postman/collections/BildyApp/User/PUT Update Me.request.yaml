@@ -1,21 +1,21 @@
 $kind: http-request
 name: PUT Update Me
 method: PUT
-url: '{{baseUrl}}/api/user/me'
+url: '{{baseUrl}}/api/user/register'
 order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
 auth:
   type: bearer
   credentials:
     - key: token
       value: '{{accessToken}}'
-headers:
-  - key: Content-Type
-    value: application/json
 body:
   type: json
   content: |-
     {
-      "name": "Ana",
-      "lastName": "García",
+      "name": "Test",
+      "lastName": "User",
       "nif": "12345678A"
     }
