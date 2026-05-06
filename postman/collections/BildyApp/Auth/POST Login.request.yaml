@@ -13,3 +13,10 @@ body:
       "email": "user@bildyapp.com",
       "password": "Password123!"
     }
+scripts:
+  post-response:
+    type: text/javascript
+    exec: |-
+      const res = pm.response.json();
+      if (res.accessToken) pm.collectionVariables.set("accessToken", res.accessToken);
+      if (res.refreshToken) pm.collectionVariables.set("refreshToken", res.refreshToken);
