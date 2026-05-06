@@ -1,7 +1,7 @@
 // tests/deliverynote.test.js
 import { jest } from '@jest/globals'
 
-// mock jest data
+// Mock jest data
 await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
   uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
   uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
@@ -11,14 +11,26 @@ await jest.unstable_mockModule('../src/services/pdf.service.js', () => ({
   generateDeliveryNotePdfBuffer: jest.fn().mockResolvedValue(Buffer.from('fake-pdf')),
 }));
 
+
 import request from 'supertest';
 import { connectDB, closeDB, clearDB } from './helpers.js';
 
 const { default: app } = await import('../src/app.js');
 
+// Mongo setup
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
+
+// Jest mocks
+jest.mock('../src/services/storage.service.js', () => ({
+  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'mock://signature.png' }),
+  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'mock://note.pdf' }),
+}));
+
+jest.mock('../src/services/pdf.service.js', () => ({
+  generateDeliveryNotePdfBuffer: jest.fn().mockResolvedValue(Buffer.from('mock pdf')),
+}));
 
 // Globals for tests
 const baseUser = {
@@ -270,7 +282,7 @@ it('deletes an unsigned delivery note', async () => {
     .set('Authorization', `Bearer ${token}`)
 
   expect(res.status).toBe(200);
-  expect(res.body).toHaveProperty('message');
+  expect(res.body.data).toHaveProperty('message');
 });
 
 // GET /api/deliverynote/pdf/:id: returns application/pdf and 200
