@@ -7,6 +7,10 @@ await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
   uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
 }));
 
+await jest.unstable_mockModule('../src/services/pdf.service.js', () => ({
+  generateDeliveryNotePdfBuffer: jest.fn().mockResolvedValue(Buffer.from('fake-pdf')),
+}));
+
 import request from 'supertest';
 import { connectDB, closeDB, clearDB } from './helpers.js';
 
