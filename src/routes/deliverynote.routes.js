@@ -18,6 +18,7 @@ import {
 
 const router = Router();
 
+// All delivery note routes require a valid JWT
 router.use(authenticateToken);
 
 /**
@@ -82,11 +83,17 @@ router.use(authenticateToken);
  *                       example: bags
  *     responses:
  *       201:
- *         description: Delivery note created
+ *         description: Delivery note created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/DeliveryNote'
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/DeliveryNote'
  *       400:
  *         description: Validation error
  *       401:
@@ -98,7 +105,7 @@ router.post('/', validate(createDeliveryNoteSchema), createDeliveryNote);
  * @swagger
  * /api/deliverynote:
  *   get:
- *     summary: List all delivery notes
+ *     summary: List all delivery notes for the authenticated user's company
  *     tags: [DeliveryNotes]
  *     security:
  *       - bearerAuth: []
@@ -117,10 +124,12 @@ router.post('/', validate(createDeliveryNoteSchema), createDeliveryNote);
  *         name: project
  *         schema:
  *           type: string
+ *         description: Filter by project ID
  *       - in: query
  *         name: client
  *         schema:
  *           type: string
+ *         description: Filter by client ID
  *       - in: query
  *         name: format
  *         schema:
@@ -130,24 +139,40 @@ router.post('/', validate(createDeliveryNoteSchema), createDeliveryNote);
  *         name: signed
  *         schema:
  *           type: boolean
+ *         description: Filter by signed status
  *       - in: query
  *         name: from
  *         schema:
  *           type: string
  *           format: date
+ *         description: Filter notes from this date (inclusive)
  *       - in: query
  *         name: to
  *         schema:
  *           type: string
  *           format: date
+ *         description: Filter notes up to this date (inclusive)
  *       - in: query
  *         name: sort
  *         schema:
  *           type: string
  *           example: -workDate
+ *         description: Sort field, prefix with '-' for descending
  *     responses:
  *       200:
  *         description: List of delivery notes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/DeliveryNote'
  *       401:
  *         description: Unauthorized
  */
@@ -157,7 +182,7 @@ router.get('/', getDeliveryNotes);
  * @swagger
  * /api/deliverynote/pdf/{id}:
  *   get:
- *     summary: Download delivery note as PDF
+ *     summary: Download a delivery note as a PDF file
  *     tags: [DeliveryNotes]
  *     security:
  *       - bearerAuth: []
@@ -167,16 +192,19 @@ router.get('/', getDeliveryNotes);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Delivery note ID
  *     responses:
  *       200:
- *         description: PDF file
+ *         description: PDF file stream
  *         content:
  *           application/pdf:
  *             schema:
  *               type: string
  *               format: binary
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Not found
+ *         description: Delivery note not found
  */
 router.get('/pdf/:id', validate(deliveryNoteIdSchema), getDeliveryNotePDF);
 
@@ -184,7 +212,7 @@ router.get('/pdf/:id', validate(deliveryNoteIdSchema), getDeliveryNotePDF);
  * @swagger
  * /api/deliverynote/{id}:
  *   get:
- *     summary: Get a specific delivery note
+ *     summary: Get a specific delivery note by ID
  *     tags: [DeliveryNotes]
  *     security:
  *       - bearerAuth: []
@@ -194,15 +222,24 @@ router.get('/pdf/:id', validate(deliveryNoteIdSchema), getDeliveryNotePDF);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Delivery note ID
  *     responses:
  *       200:
  *         description: Delivery note found
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/DeliveryNote'
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/DeliveryNote'
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Not found
+ *         description: Delivery note not found
  */
 router.get('/:id', validate(deliveryNoteIdSchema), getDeliveryNote);
 
@@ -210,7 +247,8 @@ router.get('/:id', validate(deliveryNoteIdSchema), getDeliveryNote);
  * @swagger
  * /api/deliverynote/{id}/sign:
  *   patch:
- *     summary: Sign a delivery note
+ *     summary: Sign a delivery note with a signature image
+ *     description: Once signed, a delivery note cannot be modified or deleted.
  *     tags: [DeliveryNotes]
  *     security:
  *       - bearerAuth: []
@@ -220,6 +258,7 @@ router.get('/:id', validate(deliveryNoteIdSchema), getDeliveryNote);
  *         required: true
  *         schema:
  *           type: string
+ *         description: Delivery note ID
  *     requestBody:
  *       required: true
  *       content:
@@ -231,14 +270,28 @@ router.get('/:id', validate(deliveryNoteIdSchema), getDeliveryNote);
  *               signature:
  *                 type: string
  *                 format: binary
- *                 description: Signature image file
+ *                 description: Signature image (jpeg, jpg, png, or webp)
  *     responses:
  *       200:
- *         description: Delivery note signed
- *       409:
- *         description: Already signed
+ *         description: Delivery note signed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/DeliveryNote'
+ *       400:
+ *         description: No signature file provided
+ *       401:
+ *         description: Unauthorized
  *       404:
- *         description: Not found
+ *         description: Delivery note not found
+ *       409:
+ *         description: Delivery note is already signed
  */
 router.patch(
   '/:id/sign',
@@ -252,6 +305,7 @@ router.patch(
  * /api/deliverynote/{id}:
  *   delete:
  *     summary: Delete a delivery note
+ *     description: Signed delivery notes cannot be deleted.
  *     tags: [DeliveryNotes]
  *     security:
  *       - bearerAuth: []
@@ -261,13 +315,27 @@ router.patch(
  *         required: true
  *         schema:
  *           type: string
+ *         description: Delivery note ID
  *     responses:
  *       200:
- *         description: Deleted
+ *         description: Delivery note deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Delivery note deleted
+ *       401:
+ *         description: Unauthorized
  *       403:
- *         description: Cannot delete a signed note
+ *         description: Cannot delete a signed delivery note
  *       404:
- *         description: Not found
+ *         description: Delivery note not found
  */
 router.delete('/:id', validate(deliveryNoteIdSchema), deleteDeliveryNote);
 
