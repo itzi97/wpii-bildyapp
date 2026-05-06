@@ -38,7 +38,9 @@ export const authenticateToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('JWT verify error:', error.name, error.message)
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('JWT verify error:', error.name, error.message);
+    }
     return next(AppError.unauthorized('Invalid or expired token'))
   }
 };

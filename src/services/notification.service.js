@@ -7,7 +7,9 @@ const notificationService = new EventEmitter();
 
 // Log when a user registers.
 notificationService.on('user:registered', async (user) => {
+  if (process.env.NODE_ENV === 'test') return;
   console.log(`User registered: ${user.email}`);
+
   try {
     await sendVerificationEmail(user.email, user.verificationCode);
     console.log(`Verification email send to: ${user.email}`);
@@ -18,11 +20,13 @@ notificationService.on('user:registered', async (user) => {
 
 // Log when a user verifies their email.
 notificationService.on('user:verified', (user) => {
+  if (process.env.NODE_ENV === 'test') return;
   console.log(`User verified: ${user.email}`);
 });
 
 // Log when a user is invited.
 notificationService.on('user:invited', async (payload) => {
+  if (process.env.NODE_ENV === 'test') return;
   console.log(`User invited: ${payload.email}`);
   try {
     await sendVerificationEmail(payload.email, payload.verificationCode);
@@ -34,6 +38,7 @@ notificationService.on('user:invited', async (payload) => {
 
 // Log when a user is deleted.
 notificationService.on('user:deleted', (payload) => {
+  if (process.env.NODE_ENV === 'test') return;
   console.log(`User deleted: ${payload.email} (soft: ${payload.soft})`);
 });
 
