@@ -2,7 +2,7 @@
 import multer from 'multer';
 import AppError from '../utils/AppError.js';
 
-const imageFilter = (req, file, cb) => {
+export const imageFilter = (req, file, cb) => {
   const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
 
   if (!allowed.includes(file.mimetype)) {
