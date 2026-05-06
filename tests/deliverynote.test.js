@@ -1,7 +1,9 @@
 // tests/deliverynote.test.js
 import { jest } from '@jest/globals'
 
-// Mock jest data
+// Mock storage and pdf services so tests don't make real network/file calls.
+// Jest's unstable_mockModule is used because the controller imports them
+// dynamically (via import()), which requires this async mock approach.
 await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
   uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
   uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
@@ -17,18 +19,18 @@ import { connectDB, closeDB, clearDB } from './helpers.js';
 
 const { default: app } = await import('../src/app.js');
 
-// Mongo setup
+// In-memory MongoDB lifecycle hooks
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
 
-// Globals for tests
 const baseUser = {
   email: 'test@bildyapp.com',
   password: 'Password123!',
 };
 
-// Setup helper
+// Helper: registers a user, completes their profile, creates a company, client,
+// and project. Returns the token, clientId, and projectId for use in each test.
 const setup = async () => {
   const reg = await request(app).post('/api/user/register').send(baseUser);
   const token = reg.body.accessToken;
@@ -73,13 +75,13 @@ const setup = async () => {
     .send({
       name: 'DN Project',
       projectCode: 'DN001',
-      client: client.body.client._id
+      client: client.body.data._id
     });
 
   return {
     token,
-    clientId: client.body.client._id,
-    projectId: project.body.project._id
+    clientId: client.body.data._id,
+    projectId: project.body.data._id
   };
 };
 
@@ -156,7 +158,7 @@ it('gets a delivery note by id', async () => {
   expect(res.body.data.description).toBe('Inspection work');
 });
 
-// PATCH /api/deliverynote/:id/sign signs it, signing it twice returns 409
+// PATCH /api/deliverynote/:id/sign: signs a note successfully
 it('signs a delivery note', async () => {
   const { token, clientId, projectId } = await setup();
 
@@ -185,6 +187,7 @@ it('signs a delivery note', async () => {
   expect(res.body.data.signedAt).toBeTruthy();
 });
 
+// PATCH /api/deliverynote/:id/sign: returns 409 when already signed
 it('does not allow signing a delivery note twice', async () => {
   const { token, clientId, projectId } = await setup();
 
@@ -323,7 +326,13 @@ it('returns 400 when signing without signature data', async () => {
   const created = await request(app)
     .post('/api/deliverynote')
     .set('Authorization', `Bearer ${token}`)
-    .send({ clientId, projectId, format: 'hours', description: 'x', workDate: new Date().toISOString(), hours: 1 });
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      description: 'x',
+      workDate: new Date().toISOString(), hours: 1
+    });
 
   const res = await request(app)
     .patch(`/api/deliverynote/${created.body.data._id}/sign`)
@@ -353,6 +362,6 @@ it('returns 400 when creating a note with invalid body', async () => {
   const res = await request(app)
     .post('/api/deliverynote')
     .set('Authorization', `Bearer ${token}`)
-    .send({ format: 'invalid-format' }); // missing required fields
+    .send({ format: 'invalid-format' });
   expect(res.status).toBe(400);
 });

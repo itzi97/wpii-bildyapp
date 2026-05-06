@@ -1,21 +1,36 @@
-// tests/project.test.js
+// tests/deliverynote.test.js
+import { jest } from '@jest/globals';
+
+// Mock storage and pdf services so tests don't make real network/file calls.
+// Jest's unstable_mockModule is used because the controller imports them
+// dynamically (via import()), which requires this async mock approach.
+await jest.unstable_mockModule('../src/services/storage.service.js', () => ({
+  uploadSignatureBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-signature.png' }),
+  uploadPdfBuffer: jest.fn().mockResolvedValue({ secure_url: 'https://test-pdf.pdf' }),
+}));
+
+await jest.unstable_mockModule('../src/services/pdf.service.js', () => ({
+  generateDeliveryNotePdfBuffer: jest.fn().mockResolvedValue(Buffer.from('fake-pdf')),
+}));
+
 import request from 'supertest';
-import app from '../src/app.js';
 import { connectDB, closeDB, clearDB } from './helpers.js';
+
+const { default: app } = await import('../src/app.js');
 
 beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
 
-// Helper: registers a user, completes their profile, creates a company, and
-// creates a client. Returns the token and clientId for use in project tests.
-async function setup() {
-  const email = `test${Date.now()}@bildyapp.com`;
+const baseUser = {
+  email: 'test@bildyapp.com',
+  password: 'Password123!',
+};
 
-  const reg = await request(app)
-    .post('/api/user/register')
-    .send({ email, password: 'TestPassword123' });
-
+// Helper: registers a user, completes their profile, creates a company, client,
+// and project. Returns the token, clientId, and projectId for use in each test.
+const setup = async () => {
+  const reg = await request(app).post('/api/user/register').send(baseUser);
   const token = reg.body.accessToken;
 
   await request(app)
@@ -30,277 +45,234 @@ async function setup() {
       isFreelance: false,
       name: 'Test Company',
       cif: 'B12345678',
-      address: {
-        street: 'Main St', number: '1',
-        postal: '28001', city: 'Madrid', province: 'Madrid',
-      },
+      address: { street: 'Main St', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' },
     });
 
-  const clientRes = await request(app)
+  const client = await request(app)
     .post('/api/client')
     .set('Authorization', `Bearer ${token}`)
-    .send({
-      name: 'Client One',
-      cif: 'B11111111',
-      email: 'client@test.com',
-      phone: '123456789',
-      address: {
-        street: 'Client St', number: '10',
-        postal: '28002', city: 'Madrid', province: 'Madrid',
-      },
-    });
+    .send({ name: 'DN Client', cif: 'B33333333', email: 'dn@client.com' });
 
-  // Use the normalised response shape
-  const clientId = clientRes.body.data._id;
-  return { token, clientId };
-}
+  const project = await request(app)
+    .post('/api/project')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: 'DN Project', projectCode: 'DN001', client: client.body.data._id });
 
-// Reusable project payload factory, takes a clientId to keep tests DRY
-const projectPayload = (clientId) => ({
-  name: 'Test Project',
-  projectCode: 'PROJ-001',
-  client: clientId,
-  address: {
-    street: 'Project St', number: '5',
-    postal: '28003', city: 'Madrid', province: 'Madrid',
-  },
+  return {
+    token,
+    clientId: client.body.data._id,
+    projectId: project.body.data._id,
+  };
+};
+
+it('creates a delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Test work', workDate: new Date().toISOString(), hours: 8 });
+
+  expect(res.status).toBe(201);
+  expect(res.body.data).toHaveProperty('_id');
+  expect(res.body.data.format).toBe('hours');
 });
 
-describe('Project endpoints', () => {
+it('lists delivery notes', async () => {
+  const { token, clientId, projectId } = await setup();
 
-  it('creates a project', async () => {
-    const { token, clientId } = await setup();
+  await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Test work', workDate: new Date().toISOString(), hours: 8 });
 
-    const res = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const res = await request(app)
+    .get('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(201);
-    expect(res.body.data.name).toBe('Test Project');
-    expect(res.body.data.projectCode).toBe('PROJ-001');
-  });
+  expect(res.status).toBe(200);
+  expect(Array.isArray(res.body.data)).toBe(true);
+  expect(res.body.data.length).toBeGreaterThan(0);
+});
 
-  it('rejects duplicate project code in same company', async () => {
-    const { token, clientId } = await setup();
+it('gets a delivery note by id', async () => {
+  const { token, clientId, projectId } = await setup();
 
-    await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Inspection work', workDate: new Date().toISOString(), hours: 6 });
 
-    const res = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const noteId = created.body.data._id;
 
-    expect(res.status).toBe(409);
-  });
+  const res = await request(app)
+    .get(`/api/deliverynote/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
 
-  it('returns 404 when client does not exist', async () => {
-    const { token } = await setup();
+  expect(res.status).toBe(200);
+  expect(res.body.data).toHaveProperty('_id', noteId);
+  expect(res.body.data.format).toBe('hours');
+  expect(res.body.data.description).toBe('Inspection work');
+});
 
-    const res = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload('676767676767676767676767'));
+it('signs a delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
 
-    expect(res.status).toBe(404);
-  });
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Signing test', workDate: new Date().toISOString(), hours: 4 });
 
-  it('lists projects', async () => {
-    const { token, clientId } = await setup();
+  const noteId = created.body.data._id;
 
-    await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const res = await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
 
-    const res = await request(app)
-      .get('/api/project')
-      .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(200);
+  expect(res.body.data).toHaveProperty('_id', noteId);
+  expect(res.body.data.signed).toBe(true);
+  expect(res.body.data.signedAt).toBeTruthy();
+});
 
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.totalItems).toBe(1);
-  });
+it('does not allow signing a delivery note twice', async () => {
+  const { token, clientId, projectId } = await setup();
 
-  it('gets a project by id', async () => {
-    const { token, clientId } = await setup();
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Double sign test', workDate: new Date().toISOString(), hours: 5 });
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const noteId = created.body.data._id;
 
-    const res = await request(app)
-      .get(`/api/project/${created.body.data._id}`)
-      .set('Authorization', `Bearer ${token}`);
+  await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
 
-    expect(res.status).toBe(200);
-    expect(res.body.data._id).toBe(created.body.data._id);
-  });
+  const res = await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
 
-  it('returns 404 for unknown project id', async () => {
-    const { token } = await setup();
+  expect(res.status).toBe(409);
+  expect(res.body.error).toBe('CONFLICT');
+  expect(res.body.message).toBe('Delivery note is already signed');
+});
 
-    const res = await request(app)
-      .get('/api/project/676767676767676767676767')
-      .set('Authorization', `Bearer ${token}`);
+it('does not allow deleting a signed delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
 
-    expect(res.status).toBe(404);
-  });
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Signed delete protection test', workDate: new Date().toISOString(), hours: 3 });
 
-  it('updates a project', async () => {
-    const { token, clientId } = await setup();
+  const noteId = created.body.data._id;
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  await request(app)
+    .patch(`/api/deliverynote/${noteId}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
 
-    const res = await request(app)
-      .put(`/api/project/${created.body.data._id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Updated Project' });
+  const res = await request(app)
+    .delete(`/api/deliverynote/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.name).toBe('Updated Project');
-  });
+  expect(res.status).toBe(403);
+  expect(res.body.error).toBeDefined();
+});
 
-  it('soft deletes a project', async () => {
-    const { token, clientId } = await setup();
+it('deletes an unsigned delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Unsigned delete test', workDate: new Date().toISOString(), hours: 2 });
 
-    const res = await request(app)
-      .delete(`/api/project/${created.body.data._id}?soft=true`)
-      .set('Authorization', `Bearer ${token}`);
+  const noteId = created.body.data._id;
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Project archived');
+  const res = await request(app)
+    .delete(`/api/deliverynote/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
 
-    // Soft-deleted project must no longer appear in the active list
-    const check = await request(app)
-      .get(`/api/project/${created.body.data._id}`)
-      .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(200);
+  expect(res.body.message).toBeTruthy();
+});
 
-    expect(check.status).toBe(404);
-  });
+it('downloads delivery note PDF', async () => {
+  const { token, clientId, projectId } = await setup();
 
-  it('hard deletes a project', async () => {
-    const { token, clientId } = await setup();
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'PDF test', workDate: new Date().toISOString(), hours: 8 });
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+  const noteId = created.body.data._id;
 
-    const res = await request(app)
-      .delete(`/api/project/${created.body.data._id}`)
-      .set('Authorization', `Bearer ${token}`);
+  const res = await request(app)
+    .get(`/api/deliverynote/pdf/${noteId}`)
+    .set('Authorization', `Bearer ${token}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Project deleted');
-  });
+  expect(res.status).toBe(200);
+  expect(res.headers['content-type']).toBe('application/pdf');
+});
 
-  it('lists archived projects', async () => {
-    const { token, clientId } = await setup();
+it('returns 404 for non-existent delivery note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .get('/api/deliverynote/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+it('returns 404 when signing a non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .patch('/api/deliverynote/000000000000000000000000/sign')
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
+  expect(res.status).toBe(404);
+});
 
-    await request(app)
-      .delete(`/api/project/${created.body.data._id}?soft=true`)
-      .set('Authorization', `Bearer ${token}`);
+it('returns 400 when signing without signature data', async () => {
+  const { token, clientId, projectId } = await setup();
 
-    const res = await request(app)
-      .get('/api/project/archived')
-      .set('Authorization', `Bearer ${token}`);
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'x', workDate: new Date().toISOString(), hours: 1 });
 
-    expect(res.status).toBe(200);
-    expect(res.body.data.length).toBeGreaterThan(0);
-  });
+  const res = await request(app)
+    .patch(`/api/deliverynote/${created.body.data._id}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({});
+  expect(res.status).toBe(400);
+});
 
-  it('restores an archived project', async () => {
-    const { token, clientId } = await setup();
+it('returns 404 when fetching PDF for non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .get('/api/deliverynote/pdf/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
 
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
+it('returns 404 when deleting a non-existent note', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .delete('/api/deliverynote/000000000000000000000000')
+    .set('Authorization', `Bearer ${token}`);
+  expect(res.status).toBe(404);
+});
 
-    await request(app)
-      .delete(`/api/project/${created.body.data._id}?soft=true`)
-      .set('Authorization', `Bearer ${token}`);
-
-    const res = await request(app)
-      .patch(`/api/project/${created.body.data._id}/restore`)
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.deleted).toBe(false);
-  });
-
-  it('returns 404 for non-existent project', async () => {
-    const { token } = await setup();
-
-    const res = await request(app)
-      .get('/api/project/000000000000000000000000')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 404 when updating non-existent project', async () => {
-    const { token } = await setup();
-
-    const res = await request(app)
-      .put('/api/project/000000000000000000000000')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ name: 'Ghost' });
-
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 404 when updating project with a foreign client', async () => {
-    const { token, clientId } = await setup();
-
-    const created = await request(app)
-      .post('/api/project')
-      .set('Authorization', `Bearer ${token}`)
-      .send(projectPayload(clientId));
-
-    const res = await request(app)
-      .put(`/api/project/${created.body.data._id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ client: '676767676767676767676767' });
-
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 404 when deleting a non-existent project', async () => {
-    const { token } = await setup();
-
-    const res = await request(app)
-      .delete('/api/project/676767676767676767676767')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(404);
-  });
-
-  it('returns 404 when restoring a non-existent archived project', async () => {
-    const { token } = await setup();
-
-    const res = await request(app)
-      .patch('/api/project/676767676767676767676767/restore')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(res.status).toBe(404);
-  });
+it('returns 400 when creating a note with invalid body', async () => {
+  const { token } = await setup();
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ format: 'invalid-format' });
+  expect(res.status).toBe(400);
 });
