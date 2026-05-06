@@ -20,7 +20,7 @@ export const createClient = async (req, res, next) => {
 
     const client = await Client.create({ ...req.body, user: userId, company });
 
-    // Socker.IO - emit to company room
+    // Socker.IO - emit 'client:new' event to the company room
     req.app.get('io')?.to(company.toString()).emit('client:new', client);
 
     res.status(201).json({ ok: true, client });

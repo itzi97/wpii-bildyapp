@@ -42,4 +42,10 @@ notificationService.on('user:deleted', (payload) => {
   console.log(`User deleted: ${payload.email} (soft: ${payload.soft})`);
 });
 
+// Log when a user updates their personal data.
+notificationService.on('user:updated', (payload) => {
+  if (process.env.NODE_ENV === 'test') return;
+  console.log(`User updated: ${payload.userId} — fields: ${payload.updatedFields.join(', ')}`);
+});
+
 export default notificationService;
