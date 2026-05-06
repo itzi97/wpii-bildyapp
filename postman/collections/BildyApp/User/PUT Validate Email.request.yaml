@@ -1,0 +1,21 @@
+# Check your email for the OTP code after registering. 
+# Send it as { "code": "123456" } before login will work.
+$kind: http-request
+name: PUT Validate Email
+method: PUT
+url: '{{baseUrl}}/api/user/validation'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+body:
+  type: json
+  content: |-
+    {
+      "code": "{{verificationCode}}"
+    }

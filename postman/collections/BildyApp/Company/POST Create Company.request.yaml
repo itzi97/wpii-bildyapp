@@ -1,22 +1,28 @@
 $kind: http-request
-name: POST Create Company
-method: POST
+name: PATCH Create Company
+method: PATCH
 url: '{{baseUrl}}/api/user/company'
 order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
 auth:
   type: bearer
   credentials:
     - key: token
       value: '{{accessToken}}'
-headers:
-  - key: Content-Type
-    value: application/json
 body:
   type: json
   content: |-
     {
-      "name": "Bildy SL",
+      "name": "Test Company SL",
       "cif": "B12345678",
       "isFreelance": false,
-      "address": "Calle Mayor 1, Madrid"
+      "address": {
+        "street": "Calle Mayor",
+        "number": "1",
+        "postal": "28001",
+        "city": "Madrid",
+        "province": "Madrid"
+      }
     }

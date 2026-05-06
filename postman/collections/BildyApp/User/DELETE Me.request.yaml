@@ -1,7 +1,7 @@
 $kind: http-request
 name: DELETE Me
 method: DELETE
-url: '{{baseUrl}}/api/user/me'
+url: '{{baseUrl}}/api/user'
 order: 4000
 auth:
   type: bearer

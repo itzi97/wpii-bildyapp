@@ -15,9 +15,15 @@ body:
   type: json
   content: |-
     {
-      "name": "Client Name",
-      "cif": "A12345678",
-      "email": "client@example.com",
-      "phone": "+34600000000",
-      "address": "Calle Ejemplo 1, Madrid"
+      "name": "Client Test",
+      "cif": "B99999999",
+      "email": "client@test.com",
+      "phone": "600000000",
+      "address": {
+        "street": "Calle Test",
+        "number": "1",
+        "postal": "28001",
+        "city": "Madrid",
+        "province": "Madrid"
+      }
     }

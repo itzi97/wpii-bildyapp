@@ -1,7 +1,7 @@
 $kind: http-request
-name: PUT Upload Logo
-method: PUT
-url: '{{baseUrl}}/api/user/me/logo'
+name: PATCH Upload Logo
+method: PATCH
+url: '{{baseUrl}}/api/user/logo'
 order: 3000
 auth:
   type: bearer
@@ -14,3 +14,4 @@ body:
     - key: logo
       type: file
       src: ''
+      value: ''

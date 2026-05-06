@@ -1,10 +1,19 @@
 $kind: http-request
-name: PATCH Validate User
-method: PATCH
-url: '{{baseUrl}}/api/user/{{userId}}/validate'
+name: PUT Validate Email
+method: PUT
+url: '{{baseUrl}}/api/user/validation'
 order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
 auth:
   type: bearer
   credentials:
     - key: token
       value: '{{accessToken}}'
+body:
+  type: json
+  content: |-
+    {
+      "code": "{{verificationCode}}"
+    }

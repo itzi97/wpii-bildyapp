@@ -15,8 +15,5 @@ body:
   type: json
   content: |-
     {
-      "name": "Updated Client Name",
-      "email": "updated@example.com",
-      "phone": "+34611111111",
-      "address": "Calle Nueva 2, Madrid"
+      "name": "Updated Client"
     }

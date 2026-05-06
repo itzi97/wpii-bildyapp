@@ -15,7 +15,5 @@ body:
   type: json
   content: |-
     {
-      "name": "Updated Project Name",
-      "projectCode": "PRJ-001-UPD",
-      "active": true
+      "name": "Updated Project"
     }
