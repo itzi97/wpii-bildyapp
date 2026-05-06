@@ -157,7 +157,7 @@ export const signDeliveryNote = async (req, res, next) => {
     if (!deliveryNote) return next(AppError.notFound('Delivery note not found'));
 
     if (deliveryNote.signed) {
-      return res.status(409).json({ data: { error: 'Already signed' } });
+      return next(AppError.conflict('Deliery note is already signed'));
     }
 
     if (!req.file) return next(AppError.badRequest('Signature file is required'));
@@ -246,7 +246,7 @@ export const deleteDeliveryNote = async (req, res, next) => {
     }
 
     if (deliveryNote.signed) {
-      return res.status(403).json({ error: 'Cannot delete a signed delivery note' });
+      return next(AppError.forbidden('Cannot delete a signed delivery note'));
     }
 
     // Soft delete (unless param is required)
