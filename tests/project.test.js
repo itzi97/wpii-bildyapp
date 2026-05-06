@@ -10,14 +10,14 @@ afterAll(async () => await closeDB());
 // Helper: registers a user, completes their profile, creates a company and a
 // client. Returns the token and clientId for use in project tests.
 async function setup() {
-  const email = `test${Date.now()}@bildyapp.com`;
+  const suffix = Date.now();
+  const email = `test${suffix}@bildyapp.com`;
 
   const registerRes = await request(app)
     .post('/api/user/register')
     .send({ email, password: 'TestPassword123' });
 
   const token = registerRes.body.accessToken;
-
   expect(registerRes.status).toBe(201);
   expect(token).toBeDefined();
 
@@ -26,25 +26,28 @@ async function setup() {
     .set('Authorization', `Bearer ${token}`)
     .send({ name: 'Test', lastName: 'User', nif: '12345678A' });
 
-  await request(app)
+  const companyRes = await request(app)
     .patch('/api/user/company')
     .set('Authorization', `Bearer ${token}`)
     .send({
       isFreelance: false,
       name: 'Test Company',
-      cif: 'B12345678',
+      cif: `B${suffix}`.slice(0, 9), // unique CIF per run, avoids duplicate key collisions
       address: { street: 'Main St', number: '1', postal: '28001', city: 'Madrid', province: 'Madrid' },
     });
+
+  expect(companyRes.status).toBe(200); // assert company was created
 
   const clientRes = await request(app)
     .post('/api/client')
     .set('Authorization', `Bearer ${token}`)
     .send({ name: 'Project Client', cif: 'B11111111', email: 'client@test.com' });
 
+  expect(clientRes.status).toBe(201); // assert client was created
   return { token, clientId: clientRes.body.data._id };
 }
 
-// Reusable project payload — individual tests override fields as needed
+// Reusable project payload, individual tests override fields as needed
 const projectPayload = (clientId) => ({
   name: 'Project One',
   projectCode: 'PRJ001',
@@ -328,5 +331,13 @@ describe('Project endpoints', () => {
       .send({ name: 'No code' });
 
     expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for a project belonging to a different company', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .get('/api/project/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
   });
 });

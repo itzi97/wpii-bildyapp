@@ -23,12 +23,15 @@ describe('app socket helpers', () => {
 });
 
 describe('app rate limit middleware', () => {
-  it('applies rate limiting middleware', async () => {
+  it('skips rate limiting in test environment', async () => {
+    // In NODE_ENV=test the rate limiter is disabled to prevent 429s during
+    // integration tests. We verify that no rate-limit headers are present.
     const res = await request(app)
       .get('/api/user')
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(res.headers['x-ratelimit-limit']).toBeDefined();
-    expect(res.headers['x-ratelimit-remaining']).toBeDefined();
+    // The route still responds (401 from auth middleware), but no rate-limit headers
+    expect(res.status).toBe(401);
+    expect(res.headers['x-ratelimit-limit']).toBeUndefined();
   });
 });
