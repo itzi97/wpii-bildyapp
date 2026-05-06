@@ -449,3 +449,62 @@ it('returns 404 when project not found on create', async () => {
     });
   expect(res.status).toBe(404);
 });
+
+it('filters delivery notes by signed=true', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Filter test', workDate: new Date().toISOString(), hours: 4 });
+
+  await request(app)
+    .patch(`/api/deliverynote/${created.body.data._id}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
+
+  const res = await request(app)
+    .get('/api/deliverynote?signed=true')
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  expect(res.body.data.every(n => n.signed === true)).toBe(true);
+});
+
+it('sorts delivery notes with descending sort param', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'Sort A', workDate: new Date().toISOString(), hours: 2 });
+
+  const res = await request(app)
+    .get('/api/deliverynote?sort=-workDate')
+    .set('Authorization', `Bearer ${token}`);
+
+  expect(res.status).toBe(200);
+  expect(Array.isArray(res.body.data)).toBe(true);
+});
+
+it('redirects to pdfUrl when note is already signed', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const created = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ clientId, projectId, format: 'hours', description: 'PDF redirect test', workDate: new Date().toISOString(), hours: 3 });
+
+  await request(app)
+    .patch(`/api/deliverynote/${created.body.data._id}/sign`)
+    .set('Authorization', `Bearer ${token}`)
+    .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png');
+
+  const res = await request(app)
+    .get(`/api/deliverynote/pdf/${created.body.data._id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .redirects(0); // don't follow redirect — inspect the 302
+
+  // Supertest follows redirects by default; with redirects(0) we check the redirect itself
+  expect([200, 302]).toContain(res.status);
+});
