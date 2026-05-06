@@ -164,7 +164,7 @@ describe('PUT /api/client/:id', () => {
 
   it('returns 404 when updating non-existent client', async () => {
     const { token } = await setup();
-    const res = await request(app).post('/api/client/676767676767676767676767')
+    const res = await request(app).put('/api/client/676767676767676767676767')
       .set('Authorization', `Bearer ${token}`).send({ name: 'Ghost' });
     expect(res.status).toBe(404);
   });
