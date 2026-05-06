@@ -7,7 +7,8 @@ beforeAll(async () => await connectDB());
 afterEach(async () => await clearDB());
 afterAll(async () => await closeDB());
 
-// Helper setup function
+// Helper: registers a user, completes their profile, creates a company, and
+// creates a client. Returns the token and clientId for use in project tests.
 async function setup() {
   const email = `test${Date.now()}@bildyapp.com`;
 
@@ -49,10 +50,12 @@ async function setup() {
       },
     });
 
-  const clientId = clientRes.body.client._id;
+  // Use the normalised response shape
+  const clientId = clientRes.body.data._id;
   return { token, clientId };
 }
 
+// Reusable project payload factory, takes a clientId to keep tests DRY
 const projectPayload = (clientId) => ({
   name: 'Test Project',
   projectCode: 'PROJ-001',
@@ -64,6 +67,7 @@ const projectPayload = (clientId) => ({
 });
 
 describe('Project endpoints', () => {
+
   it('creates a project', async () => {
     const { token, clientId } = await setup();
 
@@ -73,8 +77,8 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     expect(res.status).toBe(201);
-    expect(res.body.project.name).toBe('Test Project');
-    expect(res.body.project.projectCode).toBe('PROJ-001');
+    expect(res.body.data.name).toBe('Test Project');
+    expect(res.body.data.projectCode).toBe('PROJ-001');
   });
 
   it('rejects duplicate project code in same company', async () => {
@@ -117,7 +121,7 @@ describe('Project endpoints', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.projects)).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
     expect(res.body.totalItems).toBe(1);
   });
 
@@ -130,11 +134,11 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     const res = await request(app)
-      .get(`/api/project/${created.body.project._id}`)
+      .get(`/api/project/${created.body.data._id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.project._id).toBe(created.body.project._id);
+    expect(res.body.data._id).toBe(created.body.data._id);
   });
 
   it('returns 404 for unknown project id', async () => {
@@ -156,12 +160,12 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     const res = await request(app)
-      .put(`/api/project/${created.body.project._id}`)
+      .put(`/api/project/${created.body.data._id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Updated Project' });
 
     expect(res.status).toBe(200);
-    expect(res.body.project.name).toBe('Updated Project');
+    expect(res.body.data.name).toBe('Updated Project');
   });
 
   it('soft deletes a project', async () => {
@@ -173,15 +177,17 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     const res = await request(app)
-      .delete(`/api/project/${created.body.project._id}?soft=true`)
+      .delete(`/api/project/${created.body.data._id}?soft=true`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Project archived');
 
-    // Should no longer appear in active list
+    // Soft-deleted project must no longer appear in the active list
     const check = await request(app)
-      .get(`/api/project/${created.body.project._id}`)
+      .get(`/api/project/${created.body.data._id}`)
       .set('Authorization', `Bearer ${token}`);
+
     expect(check.status).toBe(404);
   });
 
@@ -194,10 +200,11 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     const res = await request(app)
-      .delete(`/api/project/${created.body.project._id}`)
+      .delete(`/api/project/${created.body.data._id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Project deleted');
   });
 
   it('lists archived projects', async () => {
@@ -209,7 +216,7 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     await request(app)
-      .delete(`/api/project/${created.body.project._id}?soft=true`)
+      .delete(`/api/project/${created.body.data._id}?soft=true`)
       .set('Authorization', `Bearer ${token}`);
 
     const res = await request(app)
@@ -217,7 +224,7 @@ describe('Project endpoints', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.projects.length).toBeGreaterThan(0);
+    expect(res.body.data.length).toBeGreaterThan(0);
   });
 
   it('restores an archived project', async () => {
@@ -229,31 +236,35 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     await request(app)
-      .delete(`/api/project/${created.body.project._id}?soft=true`)
+      .delete(`/api/project/${created.body.data._id}?soft=true`)
       .set('Authorization', `Bearer ${token}`);
 
     const res = await request(app)
-      .patch(`/api/project/${created.body.project._id}/restore`)
+      .patch(`/api/project/${created.body.data._id}/restore`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.project.deleted).toBe(false);
+    expect(res.body.data.deleted).toBe(false);
   });
 
   it('returns 404 for non-existent project', async () => {
     const { token } = await setup();
+
     const res = await request(app)
       .get('/api/project/000000000000000000000000')
       .set('Authorization', `Bearer ${token}`);
+
     expect(res.status).toBe(404);
   });
 
   it('returns 404 when updating non-existent project', async () => {
     const { token } = await setup();
+
     const res = await request(app)
       .put('/api/project/000000000000000000000000')
       .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Ghost' });
+
     expect(res.status).toBe(404);
   });
 
@@ -266,7 +277,7 @@ describe('Project endpoints', () => {
       .send(projectPayload(clientId));
 
     const res = await request(app)
-      .put(`/api/project/${created.body.project._id}`)
+      .put(`/api/project/${created.body.data._id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ client: '676767676767676767676767' });
 
@@ -275,18 +286,21 @@ describe('Project endpoints', () => {
 
   it('returns 404 when deleting a non-existent project', async () => {
     const { token } = await setup();
+
     const res = await request(app)
       .delete('/api/project/676767676767676767676767')
       .set('Authorization', `Bearer ${token}`);
+
     expect(res.status).toBe(404);
   });
 
   it('returns 404 when restoring a non-existent archived project', async () => {
     const { token } = await setup();
+
     const res = await request(app)
       .patch('/api/project/676767676767676767676767/restore')
       .set('Authorization', `Bearer ${token}`);
+
     expect(res.status).toBe(404);
   });
 });
-
