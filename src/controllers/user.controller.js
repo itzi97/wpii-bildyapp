@@ -7,6 +7,19 @@ import AppError from '../utils/AppError.js';
 import config from '../config/index.js';
 import notificationService from '../services/notification.service.js';
 
+const generateTokens = (userId) => ({
+  accessToken: jwt.sign(
+    { id: userId },
+    config.JWT_SECRET,
+    { expiresIn: config.JWT_EXPIRES_IN }
+  ),
+  refreshToken: jwt.sign(
+    { id: userId },
+    config.JWT_REFRESH_SECRET,
+    { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
+  )
+});
+
 export const register = async (req, res, next) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -23,17 +36,7 @@ export const register = async (req, res, next) => {
     // User registered notification being sent after user is saved
     notificationService.emit('user:registered', user);
 
-    const accessToken = jwt.sign(
-      { id: user._id },
-      config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      config.JWT_REFRESH_SECRET,
-      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
-    );
+    const { accessToken, refreshToken } = generateTokens(user._id);
 
     user.refreshToken = refreshToken;
     await user.save();
@@ -74,17 +77,7 @@ export const login = async (req, res, next) => {
       return next(AppError.unauthorized('Invalid credentials'));
     }
 
-    // Generate tokens (same as register)
-    const accessToken = jwt.sign(
-      { id: user._id },
-      config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN }
-    );
-    const refreshToken = jwt.sign(
-      { id: user._id },
-      config.JWT_REFRESH_SECRET,
-      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
-    );
+    const { accessToken, refreshToken } = generateTokens(user._id);
 
     user.refreshToken = refreshToken; // Store for logout
     await user.save();
@@ -275,17 +268,10 @@ export const refreshToken = async (req, res, next) => {
       return next(AppError.unauthorized('Invalid refresh token'));
     }
 
-    const newAccessToken = jwt.sign(
-      { id: user._id },
-      config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN }
-    );
-
-    const newRefreshToken = jwt.sign(
-      { id: user._id },
-      config.JWT_REFRESH_SECRET,
-      { expiresIn: config.JWT_REFRESH_EXPIRES_IN }
-    );
+    const {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    } = generateTokens(user._id);
 
     user.refreshToken = newRefreshToken;
     await user.save();
