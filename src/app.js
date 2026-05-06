@@ -9,6 +9,7 @@ import { swaggerServe, swaggerSetup } from './config/swagger.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import errorHandler from './middleware/error-handler.js';
+import mongoose from 'mongoose';
 
 // Routes
 import userRoutes from './routes/user.routes.js';
@@ -82,6 +83,15 @@ app.use('/api/user', userRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/project', projectRoutes);
 app.use('/api/deliverynote', deliveryNoteRoutes);
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
 
 // Catches all errors thrown via next(err)
 app.use(errorHandler);
