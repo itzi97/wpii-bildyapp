@@ -383,3 +383,37 @@ it('creates a material-format delivery note', async () => {
   expect(res.status).toBe(201);
   expect(res.body.data.format).toBe('material');
 });
+
+it('rejects hours-format note with no hours or workers', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'hours',
+      workDate: new Date().toISOString(),
+      // intentionally omitting hours and workers
+    });
+
+  expect(res.status).toBe(400);
+});
+
+it('rejects material-format note with no materials', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'material',
+      workDate: new Date().toISOString(),
+      // intentionally omitting materials
+    });
+
+  expect(res.status).toBe(400);
+});
