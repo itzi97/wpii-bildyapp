@@ -230,6 +230,70 @@ describe('User endpoints', () => {
     const res = await request(app).put('/api/user/validation').set('Authorization', `Bearer ${token}`).send({ code: user.verificationCode });
     expect(res.status).toBe(400);
   });
+
+  it('returns 429 after exhausting verification attempts', async () => {
+    const email = `attempts${Date.now()}@test.com`;
+    const reg = await request(app)
+      .post('/api/user/register')
+      .send({ email, password: 'TestPassword123' });
+
+    const token = reg.body.accessToken;
+
+    for (let i = 0; i < 3; i++) {
+      await request(app)
+        .put('/api/user/validation')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ code: '000000' });
+    }
+
+    const res = await request(app)
+      .put('/api/user/validation')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ code: '000000' });
+
+    expect(res.status).toBe(429);
+  });
+
+  it('rejects refresh when token is missing', async () => {
+    const res = await request(app)
+      .post('/api/user/refresh')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects password change with wrong current password', async () => {
+    const { token } = await setupWithCompany();
+
+    const res = await request(app)
+      .put('/api/user/password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        currentPassword: 'WrongPassword123',
+        newPassword: 'NewPassword456'
+      });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects inviting an already registered email', async () => {
+    const { token } = await setupWithCompany();
+    const existingEmail = `existing${Date.now()}@bildyapp.com`;
+
+    await request(app)
+      .post('/api/user/register')
+      .send({ email: existingEmail, password: 'TestPassword123' });
+
+    const res = await request(app)
+      .post('/api/user/invite')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        email: existingEmail,
+        name: 'Existing',
+        lastName: 'User'
+      });
+
+    expect(res.status).toBe(409);
+  });
 });
 
 describe('Role middleware — forbidden access', () => {
