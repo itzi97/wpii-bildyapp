@@ -3,6 +3,9 @@
 # node modules
 node_modules
 
+# mongo docker
+mongo_data
+
 # env files
 .env
 .env.*
