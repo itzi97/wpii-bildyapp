@@ -2,6 +2,7 @@
 import DeliveryNote from '../models/DeliveryNote.js';
 import Client from '../models/Client.js';
 import Project from '../models/Project.js';
+import Company from '../models/Company.js';
 import AppError from '../utils/AppError.js';
 
 // -- POST /api/deliverynote
