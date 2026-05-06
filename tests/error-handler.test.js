@@ -38,6 +38,7 @@ describe('error-handler middleware', () => {
   });
 
   it('returns 500 for unexpected errors and logs to Slack', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => { });
     const err = new Error('Boom');
     const req = { method: 'GET', originalUrl: '/api/test' };
     const res = makeRes();
@@ -50,5 +51,6 @@ describe('error-handler middleware', () => {
       message: 'Internal server error',
     });
     expect(logErrorToSlack).toHaveBeenCalledWith(err, req);
+    spy.mockRestore();
   });
 });
