@@ -212,10 +212,9 @@ it('does not allow signing a delivery note twice', async () => {
     .set('Authorization', `Bearer ${token}`)
     .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
 
-
-  // TODO
   expect(res.status).toBe(409);
-  expect(res.body.data.error).toBe('Already signed');
+  expect(res.body.error).toBe('CONFLICT');
+  expect(res.body.message).toBe('Delivery note is already signed');
 });
 
 // DELETE /api/deliverynote/:id: returns 403 when signed

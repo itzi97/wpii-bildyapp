@@ -157,7 +157,7 @@ export const signDeliveryNote = async (req, res, next) => {
     if (!deliveryNote) return next(AppError.notFound('Delivery note not found'));
 
     if (deliveryNote.signed) {
-      return next(AppError.conflict('Deliery note is already signed'));
+      return next(AppError.conflict('Delivery note is already signed'));
     }
 
     if (!req.file) return next(AppError.badRequest('Signature file is required'));
