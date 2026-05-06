@@ -365,3 +365,21 @@ it('returns 400 when creating a note with invalid body', async () => {
     .send({ format: 'invalid-format' });
   expect(res.status).toBe(400);
 });
+
+it('creates a material-format delivery note', async () => {
+  const { token, clientId, projectId } = await setup();
+
+  const res = await request(app)
+    .post('/api/deliverynote')
+    .set('Authorization', `Bearer ${token}`)
+    .send({
+      clientId,
+      projectId,
+      format: 'material',
+      workDate: new Date().toISOString(),
+      materials: [{ material: 'Cement', quantity: 10, unit: 'bags' }],
+    });
+
+  expect(res.status).toBe(201);
+  expect(res.body.data.format).toBe('material');
+});

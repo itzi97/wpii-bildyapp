@@ -433,4 +433,12 @@ describe('Client endpoints', () => {
 
     expect(res.status).toBe(404);
   });
+
+  it('returns 404 for a non-existent client', async () => {
+    const { token } = await setup();
+    const res = await request(app)
+      .get('/api/client/000000000000000000000000')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(404);
+  });
 });

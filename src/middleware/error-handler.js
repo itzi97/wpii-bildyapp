@@ -31,6 +31,6 @@ export default async function errorHandler(err, req, res, next) {
 
   return res.status(500).json({
     error: 'INTERNAL_ERROR',
-    message: 'An unexpected error occurred. Please try again later.',
+    message: 'Internal server error',
   });
 }

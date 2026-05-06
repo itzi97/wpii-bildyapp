@@ -133,4 +133,25 @@ describe('GET /api/client', () => {
       .set('Authorization', 'Bearer ');
     expect(res.status).toBe(401);
   });
+
+  it('returns 401 when Authorization header is missing', async () => {
+    const res = await request(app).get('/api/user');
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe('UNAUTHORIZED');
+  });
+
+  it('returns 401 when token format is wrong (no Bearer prefix)', async () => {
+    const res = await request(app)
+      .get('/api/user')
+      .set('Authorization', 'Token abc123');
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a token without Bearer prefix', async () => {
+    const res = await request(app)
+      .get('/api/user')
+      .set('Authorization', 'notbearertoken');
+
+    expect(res.status).toBe(401);
+  });
 });
