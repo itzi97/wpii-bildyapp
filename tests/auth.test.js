@@ -89,6 +89,22 @@ describe('PUT /api/user/register (onboarding)', () => {
       .send({ name: 'Test', lastName: 'User', nif: '12345678A' });
     expect(res.status).toBe(200);
   });
+
+  it('rejects a non-admin user on an admin-only route', async () => {
+    // Register a regular user
+    const res1 = await request(app)
+      .post('/api/user/register')
+      .send({ email: `roletest${Date.now()}@test.com`, password: 'TestPassword123' });
+
+    const token = res1.body.accessToken;
+
+    // Attempt to access a route protected by authorizeRoles('admin')
+    const res = await request(app)
+      .get('/api/admin/users')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(403);
+  });
 });
 
 describe('PATCH /api/user/company', () => {
@@ -150,8 +166,9 @@ describe('GET /api/client', () => {
   it('rejects a token without Bearer prefix', async () => {
     const res = await request(app)
       .get('/api/user')
-      .set('Authorization', 'notbearertoken');
+      .set('Authorization', 'plaintokennoprefix');
 
     expect(res.status).toBe(401);
   });
 });
+

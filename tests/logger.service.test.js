@@ -57,4 +57,27 @@ describe('logger.service', () => {
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
   });
+
+  it('handles Slack fetch failure gracefully', async () => {
+    // Mock fetch to reject — logErrorToSlack must not throw
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+    await expect(
+      logErrorToSlack(new Error('Test error'), { method: 'GET', originalUrl: '/test' })
+    ).resolves.not.toThrow();
+
+    global.fetch = originalFetch;
+  });
+
+  it('handles non-ok Slack response gracefully', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+
+    await expect(
+      logErrorToSlack(new Error('Test error'), { method: 'GET', originalUrl: '/test' })
+    ).resolves.not.toThrow();
+
+    global.fetch = originalFetch;
+  });
 });
