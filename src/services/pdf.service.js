@@ -18,7 +18,6 @@ export async function generateDeliveryNotePdfBuffer(deliveryNote) {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // TODO: Figure out best format for pdf data
       doc.fontSize(20).text('Delivery Note', { align: 'center' });
       doc.moveDown();
 

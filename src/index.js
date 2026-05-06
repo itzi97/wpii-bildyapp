@@ -1,9 +1,7 @@
 // src/index.js
-// src/index.js
-import server from './app.js'
+import server, { io } from './app.js'
 import { connectDB } from './config/index.js';
 import mongoose from 'mongoose';
-import { io } from './app.js';
 
 const PORT = process.env.PORT || 3000;
 

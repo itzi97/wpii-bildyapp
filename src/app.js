@@ -92,7 +92,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-
 // Catches all errors thrown via next(err)
 app.use(errorHandler);
 
