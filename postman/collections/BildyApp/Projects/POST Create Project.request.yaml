@@ -1,0 +1,22 @@
+$kind: http-request
+name: POST Create Project
+method: POST
+url: '{{baseUrl}}/api/project'
+order: 1000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Project Name",
+      "projectCode": "PRJ-001",
+      "clientId": "{{clientId}}",
+      "active": true
+    }

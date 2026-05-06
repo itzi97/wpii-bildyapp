@@ -1,6 +1,6 @@
 {
   "name": "bildyapp-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "REST API for BildyApp user management",
   "type": "module",
   "main": "src/index.js",

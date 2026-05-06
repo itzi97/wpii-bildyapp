@@ -1,0 +1,22 @@
+$kind: http-request
+name: PUT Update Client
+method: PUT
+url: '{{baseUrl}}/api/client/{{clientId}}'
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Client Name",
+      "email": "updated@example.com",
+      "phone": "+34611111111",
+      "address": "Calle Nueva 2, Madrid"
+    }

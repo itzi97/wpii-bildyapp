@@ -1,0 +1,10 @@
+$kind: http-request
+name: PATCH Validate User
+method: PATCH
+url: '{{baseUrl}}/api/user/{{userId}}/validate'
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'

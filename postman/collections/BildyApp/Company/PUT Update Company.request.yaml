@@ -1,0 +1,22 @@
+$kind: http-request
+name: PUT Update Company
+method: PUT
+url: '{{baseUrl}}/api/user/company'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{accessToken}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Bildy SL Updated",
+      "cif": "B12345678",
+      "isFreelance": false,
+      "address": "Calle Mayor 10, Madrid"
+    }
