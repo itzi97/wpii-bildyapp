@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth.middleware.js';
 import { authorizeRoles } from '../middleware/role.middleware.js';
-import { upload } from '../middleware/upload.js';
+import { uploadMemory } from '../middleware/upload.js';
 import { validate } from '../middleware/validate.js';
 import {
   register,
@@ -200,7 +200,7 @@ router.patch(
  *       400:
  *         description: No file provided
  */
-router.patch('/logo', authenticateToken, upload.single('logo'), uploadLogo);
+router.patch('/logo', authenticateToken, uploadMemory.single('logo'), uploadLogo);
 
 /**
  * @swagger
