@@ -4,8 +4,6 @@ import Client from '../models/Client.js';
 import Project from '../models/Project.js';
 import Company from '../models/Company.js';
 import AppError from '../utils/AppError.js';
-import { generateDeliveryNotePdfBuffer } from '../services/pdf.service.js';
-import { uploadSignatureBuffer, uploadPdfBuffer } from '../services/storage.service.js';
 
 export const createDeliveryNote = async (req, res, next) => {
   try {
@@ -153,25 +151,20 @@ export const signDeliveryNote = async (req, res, next) => {
     const companyId = req.user.company?._id || req.user.company;
 
     const deliveryNote = await DeliveryNote.findOne({
-      _id: req.params.id,
-      company: companyId,
-      deleted: false,
-    })
-      .populate('user', 'fullName email')
-      .populate('client')
-      .populate('project');
+      _id: req.params.id, company: companyId, deleted: false,
+    }).populate('user', 'fullName email').populate('client').populate('project');
 
-    if (!deliveryNote) {
-      return next(AppError.notFound('Delivery note not found'));
-    }
+    if (!deliveryNote) return next(AppError.notFound('Delivery note not found'));
 
     if (deliveryNote.signed) {
-      return res.status(409).json({ data: { error: 'Already signed' } })
+      return res.status(409).json({ data: { error: 'Already signed' } });
     }
 
-    if (!req.file) {
-      return next(AppError.badRequest('Signature file is required'));
-    }
+    if (!req.file) return next(AppError.badRequest('Signature file is required'));
+
+    // Dynamic imports so for jeck unstable_mockModule
+    const { uploadSignatureBuffer, uploadPdfBuffer } = await import('../services/storage.service.js');
+    const { generateDeliveryNotePdfBuffer } = await import('../services/pdf.service.js');
 
     const signatureUpload = await uploadSignatureBuffer(
       req.file.buffer,
@@ -183,22 +176,13 @@ export const signDeliveryNote = async (req, res, next) => {
     deliveryNote.signedAt = new Date();
 
     const pdfBuffer = await generateDeliveryNotePdfBuffer(deliveryNote);
-
-    const pdfUpload = await uploadPdfBuffer(
-      pdfBuffer,
-      `delivery-note-${deliveryNote._id}`
-    );
-
+    const pdfUpload = await uploadPdfBuffer(pdfBuffer, `delivery-note-${deliveryNote._id}`);
     deliveryNote.pdfUrl = pdfUpload.secure_url;
-    await deliveryNote.save();
 
+    await deliveryNote.save();
     req.app.get('io')?.to(String(companyId)).emit('deliverynotesigned', deliveryNote);
 
-    return res.status(200).json({
-      status: 'success',
-      message: 'Delivery note signed successfully',
-      data: deliveryNote,
-    });
+    return res.status(200).json({ status: 'success', message: 'Delivery note signed successfully', data: deliveryNote });
   } catch (error) {
     next(error);
   }
@@ -225,6 +209,9 @@ export const getDeliveryNotePDF = async (req, res, next) => {
     }
 
     const company = await Company.findById(note.company);
+
+    // Dynamic imports so for jeck unstable_mockModule
+    const { generateDeliveryNotePdfBuffer } = await import('../services/pdf.service.js');
 
     const pdfBuffer = await generateDeliveryNotePdfBuffer(note, {
       client: note.client,

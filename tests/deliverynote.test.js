@@ -308,12 +308,11 @@ it('returns 404 when signing a non-existent note', async () => {
   const res = await request(app)
     .patch('/api/deliverynote/000000000000000000000000/sign')
     .set('Authorization', `Bearer ${token}`)
-    .field('signatureData')
     .attach('signature', Buffer.from('fake-image-bytes'), 'signature.png')
   expect(res.status).toBe(404);
 });
 
-it('returns 400 when signing without signatureData', async () => {
+it('returns 400 when signing without signature data', async () => {
   const { token, clientId, projectId } = await setup();
 
   const created = await request(app)
