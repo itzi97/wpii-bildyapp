@@ -319,3 +319,15 @@ describe('Role middleware — forbidden access', () => {
     expect(forbidden.status).toBe(403);
   });
 });
+
+import { jest } from '@jest/globals';
+import { authorizeRoles } from '../src/middleware/role.middleware.js';
+
+describe('authorizeRoles — direct unit tests', () => {
+  it('calls next with 401 when req.user is undefined', () => {
+    const next = jest.fn();
+    authorizeRoles('admin')({}, {}, next);
+    const err = next.mock.calls[0][0];
+    expect(err.statusCode).toBe(401);  // hits line 20 (!req.user branch)
+  });
+});
