@@ -5,8 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
+import { swaggerServe, swaggerSetup } from './config/swagger.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import errorHandler from './middleware/error-handler.js';
@@ -83,27 +82,7 @@ app.use(rateLimit({
 }));
 
 // Swagger Routes
-const swaggerSpec = swaggerJsdoc({
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'BildyApp API',
-      version: '1.0.0',
-      description: 'REST API for BildyApp delivery notes management'
-    },
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
-  },
-  apis: ['./src/routes/*.js']
-});
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerServe, swaggerSetup);
 
 // App Routes
 app.use('/api/user', userRoutes);
