@@ -33,7 +33,6 @@ export const register = async (req, res, next) => {
 
     await user.save();
 
-    // User registered notification being sent after user is saved
     notificationService.emit('user:registered', user);
 
     const { accessToken, refreshToken } = generateTokens(user._id);
@@ -60,18 +59,15 @@ export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Find user and select password
     const user = await User.findOne({ email: email }).select('+password +refreshToken');
     if (!user) {
       return next(AppError.unauthorized('Invalid credentials'));
     }
 
-    // Check status
     if (user.status !== 'verified') {
       return next(AppError.unauthorized('Email not verified'));
     }
 
-    // Check password
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
       return next(AppError.unauthorized('Invalid credentials'));
@@ -79,7 +75,7 @@ export const login = async (req, res, next) => {
 
     const { accessToken, refreshToken } = generateTokens(user._id);
 
-    user.refreshToken = refreshToken; // Store for logout
+    user.refreshToken = refreshToken;
     await user.save();
 
     res.json({
@@ -103,7 +99,6 @@ export const validateEmail = async (req, res, next) => {
       return next(AppError.badRequest('Invalid or already verified'));
     }
 
-    // Return immediately if max attempts exceeded
     if (user.verificationAttempts <= 0) {
       return next(AppError.tooManyRequests('Too many attempts'));
     }
@@ -122,7 +117,6 @@ export const validateEmail = async (req, res, next) => {
       ));
     }
 
-    // Verify if all goes well
     user.status = 'verified';
     user.verificationCode = null;
     await user.save();
@@ -236,7 +230,7 @@ export const updateCompany = async (req, res, next) => {
     await user.save();
 
     res.status(200).json({
-      message: company._id ? 'Company created successfully' : 'Joined existing company',
+      message: user.role === 'guest' ? 'Company created successfully' : 'Joined existing company',
       company: {
         _id: company._id,
         name: company.name,
@@ -318,7 +312,6 @@ export const deleteUser = async (req, res, next) => {
     const soft = req.query.soft === 'true';
 
     if (soft) {
-      // Soft delete
       await User.findByIdAndUpdate(
         req.user._id,
         { deleted: true },
@@ -356,7 +349,6 @@ export const changePassword = async (req, res, next) => {
 
     const user = await User.findById(req.user._id).select('+password');
 
-    // Check if user actually exists
     if (!user) return next(AppError.notFound('User not found'));
 
     const valid = await bcrypt.compare(currentPassword, user.password);
@@ -364,7 +356,6 @@ export const changePassword = async (req, res, next) => {
       return next(AppError.unauthorized('Current password incorrect'));
     }
 
-    // Store hashed password
     user.password = newPassword;
     await user.save();
 
