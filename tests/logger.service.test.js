@@ -58,26 +58,37 @@ describe('logger.service', () => {
     consoleSpy.mockRestore();
   });
 
-  it('handles Slack fetch failure gracefully', async () => {
-    // Mock fetch to reject — logErrorToSlack must not throw
-    const originalFetch = global.fetch;
-    global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+  it('handles Slack post errors gracefully (swallows axios throw)', async () => {
+    process.env.SLACK_WEBHOOK_URL = 'https://hooks.slack.test/mock';
+
+    const axiosPost = jest.fn().mockRejectedValue(new Error('network down'));
+    await jest.unstable_mockModule('axios', () => ({
+      default: { post: axiosPost },
+    }));
+
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    const { logErrorToSlack } = await import('../src/services/logger.service.js');
 
     await expect(
-      logErrorToSlack(new Error('Test error'), { method: 'GET', originalUrl: '/test' })
-    ).resolves.not.toThrow();
+      logErrorToSlack(new Error('Boom'), { method: 'GET', originalUrl: '/api/fail' })
+    ).resolves.toBeUndefined();
 
-    global.fetch = originalFetch;
+    expect(consoleSpy).toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 
-  it('handles non-ok Slack response gracefully', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+  it('does nothing when SLACK_WEBHOOK_URL is undefined', async () => {
+    delete process.env.SLACK_WEBHOOK_URL;
 
-    await expect(
-      logErrorToSlack(new Error('Test error'), { method: 'GET', originalUrl: '/test' })
-    ).resolves.not.toThrow();
+    const axiosPost = jest.fn();
+    await jest.unstable_mockModule('axios', () => ({
+      default: { post: axiosPost },
+    }));
 
-    global.fetch = originalFetch;
+    const { logErrorToSlack } = await import('../src/services/logger.service.js');
+
+    await logErrorToSlack(new Error('Test error'), { method: 'GET', originalUrl: '/test' });
+
+    expect(axiosPost).not.toHaveBeenCalled();
   });
 });

@@ -89,19 +89,22 @@ describe('PUT /api/user/register (onboarding)', () => {
       .send({ name: 'Test', lastName: 'User', nif: '12345678A' });
     expect(res.status).toBe(200);
   });
-
   it('rejects a non-admin user on an admin-only route', async () => {
-    // Register a regular user
     const res1 = await request(app)
       .post('/api/user/register')
       .send({ email: `roletest${Date.now()}@test.com`, password: 'TestPassword123' });
 
     const token = res1.body.accessToken;
 
-    // Attempt to access a route protected by authorizeRoles('admin')
+    await User.findOneAndUpdate(
+      { email: res1.body.user?.email },
+      { role: 'user' }
+    );
+
     const res = await request(app)
-      .get('/api/admin/users')
-      .set('Authorization', `Bearer ${token}`);
+      .post('/api/user/invite')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: `invited${Date.now()}@test.com`, name: 'A', lastName: 'B' });
 
     expect(res.status).toBe(403);
   });

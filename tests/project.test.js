@@ -340,4 +340,25 @@ describe('Project endpoints', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(404);
   });
+
+  it('returns 409 when updating to a duplicate project code', async () => {
+    const { token, clientId } = await setup();
+    await request(app).post('/api/project').set('Authorization', `Bearer ${token}`).send({ name: 'P1', projectCode: 'DUPL001', client: clientId });
+    const p2 = await request(app).post('/api/project').set('Authorization', `Bearer ${token}`).send({ name: 'P2', projectCode: 'DUPL002', client: clientId });
+    const res = await request(app)
+      .put(`/api/project/${p2.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ projectCode: 'DUPL001' });
+    expect(res.status).toBe(409);
+  });
+
+  it('returns 404 when updating project with invalid client', async () => {
+    const { token, clientId } = await setup();
+    const p = await request(app).post('/api/project').set('Authorization', `Bearer ${token}`).send({ name: 'P1', projectCode: 'CLT404', client: clientId });
+    const res = await request(app)
+      .put(`/api/project/${p.body.data._id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ client: '000000000000000000000000' });
+    expect(res.status).toBe(404);
+  });
 });
