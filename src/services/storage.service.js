@@ -71,6 +71,7 @@ export async function uploadPdfBuffer(buffer, filename = 'delivery-note') {
   return uploadBuffer(buffer, {
     folder: 'bildyapp/pdfs',
     resource_type: 'raw',
+    access_mode: 'public',
     public_id: `${Date.now()}-${filename}.pdf`,
   });
 }
